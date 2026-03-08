@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_local
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/ # Update this if you use your proxy later
+      # Resource Management
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168 # Auto-delete logs older than 7 days
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none # Saves RAM/Disk
+    volumes:
+      - ./data:/home/node/.n8n
+      # Optional: To allow n8n to execute local scripts or access shared files
+      - ../../shared:/home/node/shared:ro
+    # Cap resources to keep your PC smooth
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+networks:
+  lab-network:
+    external: true

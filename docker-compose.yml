@@ -1,0 +1,11 @@
+# ~/lab/docker-compose.yml
+name: mlovera-lab
+
+include:
+  - core/proxy/docker-compose.yml
+  #- external/ollama/docker-compose.yml
+  - external/n8n/docker-compose.yml
+
+networks:
+  lab-network:
+    external: true

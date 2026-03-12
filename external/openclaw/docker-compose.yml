@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw
+    restart: unless-stopped
+    ports:
+      - "18789:18789"
+    volumes:
+      - ./data:/home/node/.openclaw
+      - ./workspace:/home/node/openclaw/workspace
+    networks:
+      - lab-network
+    environment:
+      - NODE_ENV=production
+    command: ["gateway"]
+
+  openclaw-cli:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-cli
+    profiles: ["cli"]
+    volumes:
+      - ./data:/home/node/.openclaw
+      - ./workspace:/home/node/openclaw/workspace
+    networks:
+      - lab-network
+    entrypoint: ["openclaw"]
+
+networks:
+  lab-network:
+    external: true

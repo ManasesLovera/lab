@@ -11,17 +11,17 @@ services:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
+      - N8N_SECURE_COOKIE=false
       - NODE_ENV=production
-      - WEBHOOK_URL=http://localhost:5678/ # Update this if you use your proxy later
-      # Resource Management
+      - WEBHOOK_URL=http://n8n.local/
       - EXECUTIONS_DATA_PRUNE=true
-      - EXECUTIONS_DATA_MAX_AGE=168 # Auto-delete logs older than 7 days
-      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none # Saves RAM/Disk
+      - EXECUTIONS_DATA_MAX_AGE=168
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
     volumes:
       - ./data:/home/node/.n8n
-      # Optional: To allow n8n to execute local scripts or access shared files
       - ../../shared:/home/node/shared:ro
-    # Cap resources to keep your PC smooth
+    networks:
+      - lab-network
     deploy:
       resources:
         limits:

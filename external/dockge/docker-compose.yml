@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  dockge:
+    image: louislam/dockge:latest
+    container_name: dockge
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    volumes:
+      # Access to Docker for monitoring/management
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Persistent storage for Dockge's own data (database, config)
+      - ./data:/app/data
+      # Mapping your lab directory as the 'Stacks' folder
+      # This allows Dockge to find and manage your existing compose files
+      - /home/mlovera/lab:/opt/stacks
+    environment:
+      - DOCKGE_STACKS_DIR=/opt/stacks
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    external: true

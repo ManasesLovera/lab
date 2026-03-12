@@ -40,13 +40,34 @@ if [ "$RESTART_REQUIRED" = true ]; then
     sudo systemctl restart docker
 fi
 
-# 2. Idempotent Alias Injection
-ALIAS_CMD="alias ollama='docker exec -it ollama ollama'"
-if ! grep -qF "$ALIAS_CMD" ~/.bashrc; then
-    echo "Adding terminal alias to .bashrc..."
-    echo "$ALIAS_CMD" >> ~/.bashrc
-else
-    echo "Alias already exists in .bashrc."
+# 2. Idempotent Command Injection
+mkdir -p "$HOME/.local/bin"
+if [ ! -L "$HOME/.local/bin/lab" ]; then
+    echo "Creating symlink for lab CLI in ~/.local/bin..."
+    ln -sf "/home/mlovera/lab/shared/lab" "$HOME/.local/bin/lab"
+fi
+
+if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+    echo "Adding ~/.local/bin to PATH in .bashrc..."
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+
+ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
+ALIAS_OPENCLAW="alias openclaw='docker exec -it openclaw openclaw'"
+ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
+
+if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
+    echo "Adding ollama alias to .bashrc..."
+    echo "$ALIAS_OLLAMA" >> ~/.bashrc
+fi
+if ! grep -qF "$ALIAS_OPENCLAW" ~/.bashrc; then
+    echo "Adding openclaw alias to .bashrc..."
+    echo "$ALIAS_OPENCLAW" >> ~/.bashrc
+fi
+if ! grep -qF "$ALIAS_DOCKGE" ~/.bashrc; then
+    echo "Adding dockge alias to .bashrc..."
+    echo "$ALIAS_DOCKGE" >> ~/.bashrc
 fi
 
 # 3. Network Initialization (docker-network.sh handles its own idempotency)
@@ -60,4 +81,9 @@ fi
 
 # Refresh session
 source ~/.bashrc
-echo "Setup complete. The 'ollama' alias is active and system is ready."
+
+echo "Starting core infrastructure (proxy and dockge)..."
+bash "/home/mlovera/lab/shared/lab" up proxy
+bash "/home/mlovera/lab/shared/lab" up dockge
+
+echo "Setup complete. The 'lab', 'ollama', 'openclaw', and 'dockge' aliases are active and the system is ready."

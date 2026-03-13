@@ -10,6 +10,7 @@ CYAN='\033[0;36m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
+GRAY='\033[0;90m'
 NC='\033[0m' # No Color
 
 # Helper: Find all valid projects
@@ -49,11 +50,11 @@ get_project_path() {
 # Command: help
 cmd_help() {
   echo -e "${CYAN}Lab CLI - Management Guide${NC}"
-  echo -e "Usage: ${GREEN}lab <command> [project]${NC}"
+  echo -e "Usage: ${GREEN}lab <command> [options] [project]${NC}"
   echo ""
   echo -e "${YELLOW}Commands:${NC}"
   echo -e "  ${GREEN}list${NC}            List all projects found in core/, external/, and services/."
-  echo -e "  ${GREEN}ps${NC}              Show which projects are currently running."
+  echo -e "  ${GREEN}ps [-a]${NC}         Show projects status. Use -a to show stopped projects too."
   echo -e "  ${GREEN}up <name>${NC}       Start a project (docker compose up -d)."
   echo -e "  ${GREEN}down <name>${NC}     Stop a project (docker compose down)."
   echo -e "  ${GREEN}logs <name>${NC}     View real-time logs for a project."
@@ -61,7 +62,7 @@ cmd_help() {
   echo ""
   echo -e "${YELLOW}Examples:${NC}"
   echo "  lab up n8n         # Starts the n8n service"
-  echo "  lab ps             # Checks what is running"
+  echo "  lab ps -a          # Checks status of all projects"
   echo "  lab logs proxy     # Tails the nginx proxy logs"
 }
 
@@ -90,15 +91,25 @@ cmd_list() {
 
 # Command: ps
 cmd_ps() {
-  if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+  local show_all=false
+  if [[ "$1" == "-a" ]]; then
+    show_all=true
+  elif [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo -e "${CYAN}Command: ps${NC}"
     echo "Description: Checks each project to see if it has running containers."
-    echo "Usage: lab ps"
+    echo "Options: -a  Show all projects (including stopped ones)"
+    echo "Usage: lab ps [-a]"
     return
   fi
-  echo -e "${CYAN}Running Lab Projects:${NC}"
+
+  if [ "$show_all" = true ]; then
+    echo -e "${CYAN}All Lab Projects Status:${NC}"
+  else
+    echo -e "${CYAN}Running Lab Projects:${NC}"
+  fi
+
   local projects=($(get_projects))
-  local found_running=false
+  local found_any=false
 
   for item in "${projects[@]}"; do
     local name="${item%%:*}"
@@ -108,12 +119,19 @@ cmd_ps() {
     local running=$(cd "$path" && docker compose ps -q 2>/dev/null)
     if [ -n "$running" ]; then
       printf "  ${GREEN}● %-15s${NC} (Running in %s)\n" "$name" "${path#$LAB_DIR/}"
-      found_running=true
+      found_any=true
+    elif [ "$show_all" = true ]; then
+      printf "  ${GRAY}○ %-15s${NC} (Stopped in %s)\n" "$name" "${path#$LAB_DIR/}"
+      found_any=true
     fi
   done
 
-  if [ "$found_running" = false ]; then
-    echo "  No projects are currently running."
+  if [ "$found_any" = false ]; then
+    if [ "$show_all" = true ]; then
+      echo "  No projects found."
+    else
+      echo "  No projects are currently running."
+    fi
   fi
 }
 

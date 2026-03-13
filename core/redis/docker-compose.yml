@@ -1,0 +1,14 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+    volumes:
+      - ./data:/data
+    networks:
+      - lab-network
+    command: redis-server --appendonly yes
+
+networks:
+  lab-network:
+    external: true

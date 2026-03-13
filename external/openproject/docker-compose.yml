@@ -1,8 +1,6 @@
-# OpenProject Docker Compose - Official Multi-Container Setup
-# Adapted for Lab Network
+# OpenProject Docker Compose - Migrated to Core Database
 
 volumes:
-  pgdata:
   opdata:
 
 networks:
@@ -10,18 +8,6 @@ networks:
     external: true
 
 services:
-  db:
-    image: postgres:13-alpine
-    restart: unless-stopped
-    stop_grace_period: 2m
-    volumes:
-      - "pgdata:/var/lib/postgresql/data"
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: openproject
-    networks:
-      - lab-network
-
   cache:
     image: memcached
     restart: unless-stopped
@@ -37,7 +23,8 @@ services:
       OPENPROJECT_HOST__NAME: "${OPENPROJECT_HOST__NAME}"
       OPENPROJECT_HSTS: "false"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
+      # Pointing to the core database service
+      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
       RAILS_MIN_THREADS: 4
@@ -47,7 +34,6 @@ services:
     volumes:
       - "opdata:/var/openproject/assets"
     depends_on:
-      - db
       - cache
     networks:
       - lab-network
@@ -58,13 +44,13 @@ services:
     environment:
       OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS}"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
+      # Pointing to the core database service
+      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:
       - "opdata:/var/openproject/assets"
     depends_on:
-      - db
       - cache
     command: "./docker/prod/worker"
     networks:
@@ -75,13 +61,13 @@ services:
     restart: unless-stopped
     environment:
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
+      # Pointing to the core database service
+      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:
       - "opdata:/var/openproject/assets"
     depends_on:
-      - db
       - cache
     command: "./docker/prod/cron"
     networks:

@@ -82,7 +82,8 @@ fi
 # Refresh session
 source ~/.bashrc
 
-echo "Starting core infrastructure (proxy and dockge)..."
+echo "Starting core infrastructure (postgres, proxy, and dockge)..."
+bash "/home/mlovera/lab/shared/lab" up postgres
 bash "/home/mlovera/lab/shared/lab" up proxy
 bash "/home/mlovera/lab/shared/lab" up dockge
 

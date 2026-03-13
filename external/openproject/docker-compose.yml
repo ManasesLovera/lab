@@ -37,7 +37,7 @@ services:
       OPENPROJECT_HOST__NAME: "${OPENPROJECT_HOST__NAME}"
       OPENPROJECT_HSTS: "false"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject?pool=20&encoding=unicode"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
       RAILS_MIN_THREADS: 4
@@ -58,7 +58,7 @@ services:
     environment:
       OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS}"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject?pool=20&encoding=unicode"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:
@@ -75,7 +75,7 @@ services:
     restart: unless-stopped
     environment:
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
-      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject?pool=20&encoding=unicode"
+      DATABASE_URL: "postgres://postgres:${POSTGRES_PASSWORD}@db:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:

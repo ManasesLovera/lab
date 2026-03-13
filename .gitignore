@@ -1,0 +1,32 @@
+# Docker Data & Volumes
+**/data/
+**/assets/
+**/letsencrypt/
+**/nginx/proxy_host/
+**/nginx/temp/
+**/nginx/dead_host/
+**/nginx/default_host/
+**/nginx/default_www/
+**/nginx/redirection_host/
+**/nginx/stream/
+
+# Databases
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+
+# Environment & Secrets
+.env
+*.key
+*.pem
+
+# Logs
+**/logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

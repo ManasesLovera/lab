@@ -12,11 +12,10 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       # Persistent storage for Dockge's own data (database, config)
       - ./data:/app/data
-      # Mapping your lab directory as the 'Stacks' folder
-      # This allows Dockge to find and manage your existing compose files
-      - /home/mlovera/lab:/opt/stacks
+      # Mapping the lab directory to the same path inside for symlink resolution
+      - /home/mlovera/lab:/home/mlovera/lab
     environment:
-      - DOCKGE_STACKS_DIR=/opt/stacks
+      - DOCKGE_STACKS_DIR=/home/mlovera/lab/external/dockge/stacks
     networks:
       - lab-network
 

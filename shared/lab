@@ -24,12 +24,40 @@ get_projects() {
           # Extract just the project name (the parent directory of docker-compose.yml)
           local proj_path=$(dirname "$compose_file")
           local proj_name=$(basename "$proj_path")
-          projects+=("$proj_name:$proj_path")
+          # Special case: skip dockge itself to avoid circular symlinks if it were to be symlinked
+          if [ "$proj_name" != "dockge" ]; then
+            projects+=("$proj_name:$proj_path")
+          fi
         fi
       done < <(find "$LAB_DIR/$dir" -mindepth 1 -maxdepth 2 -name "docker-compose.yml" 2>/dev/null)
     fi
   done
   echo "${projects[@]}"
+}
+
+# Command: sync-dockge
+cmd_sync_dockge() {
+  echo -e "${YELLOW}Syncing projects to Dockge...${NC}"
+  local stacks_dir="$LAB_DIR/external/dockge/stacks"
+  mkdir -p "$stacks_dir"
+
+  # Clean up dead symlinks
+  find "$stacks_dir" -type l ! -exec test -e {} \; -delete
+
+  local projects=($(get_projects))
+  for item in "${projects[@]}"; do
+    local name="${item%%:*}"
+    local path="${item#*:}"
+    
+    # Create relative symlink
+    if [ ! -L "$stacks_dir/$name" ]; then
+      echo -e "${GRAY}  Symlinking $name...${NC}"
+      # Calculate relative path from stacks_dir to path
+      local rel_path=$(realpath --relative-to="$stacks_dir" "$path")
+      ln -sf "$rel_path" "$stacks_dir/$name"
+    fi
+  done
+  echo -e "${GREEN}Dockge sync complete.${NC}"
 }
 
 # Helper: Find path for a specific project
@@ -58,6 +86,7 @@ cmd_help() {
   echo -e "  ${GREEN}up <name>${NC}       Start a project (docker compose up -d)."
   echo -e "  ${GREEN}down <name>${NC}     Stop a project (docker compose down)."
   echo -e "  ${GREEN}logs <name>${NC}     View real-time logs for a project."
+  echo -e "  ${GREEN}sync-dockge${NC}     Sync all projects as symlinks for Dockge."
   echo -e "  ${GREEN}help, -h${NC}        Show this guide."
   echo ""
   echo -e "${YELLOW}Examples:${NC}"
@@ -149,10 +178,20 @@ cmd_up() {
     return 1
   fi
 
+  # Special handling for dockge: sync projects first
+  if [ "$proj" == "dockge" ]; then
+    cmd_sync_dockge
+  fi
+
   local path=$(get_project_path "$proj")
   if [ -z "$path" ]; then
-    echo -e "${RED}Error: Project '$proj' not found.${NC}"
-    return 1
+    # Fallback for projects not in SEARCH_DIRS if they exist specifically (like dockge itself)
+    if [ "$proj" == "dockge" ]; then
+        path="$LAB_DIR/external/dockge"
+    else
+        echo -e "${RED}Error: Project '$proj' not found.${NC}"
+        return 1
+    fi
   fi
 
   echo -e "${YELLOW}Starting '$proj'...${NC}"
@@ -228,6 +267,9 @@ case "$1" in
     ;;
   logs)
     cmd_logs "$2"
+    ;;
+  sync-dockge)
+    cmd_sync_dockge
     ;;
   help|-h|--help)
     cmd_help

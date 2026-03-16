@@ -56,6 +56,7 @@ fi
 ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
 ALIAS_OPENCLAW="alias openclaw='docker exec -it openclaw openclaw'"
 ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
+ALIAS_OPENCLAW_CLI="alias openclaw-cli='docker compose -f /home/mlovera/lab/external/openclaw/docker-compose.yml run --rm openclaw-cli'"
 
 if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
     echo "Adding ollama alias to .bashrc..."
@@ -68,6 +69,10 @@ fi
 if ! grep -qF "$ALIAS_DOCKGE" ~/.bashrc; then
     echo "Adding dockge alias to .bashrc..."
     echo "$ALIAS_DOCKGE" >> ~/.bashrc
+fi
+if ! grep -qF "$ALIAS_OPENCLAW_CLI" ~/.bashrc; then
+    echo "Adding openclaw-cli alias to .bashrc..."
+    echo "$ALIAS_OPENCLAW_CLI" >> ~/.bashrc
 fi
 
 # 3. Network Initialization (docker-network.sh handles its own idempotency)

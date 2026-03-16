@@ -14,7 +14,9 @@ services:
       - lab-network
     environment:
       - NODE_ENV=production
-    command: ["gateway"]
+      - OPENCLAW_GATEWAY_BIND=lan
+    entrypoint: ["node", "/app/openclaw.mjs"]
+    command: ["gateway", "--allow-unconfigured"]
 
   openclaw-cli:
     image: ghcr.io/openclaw/openclaw:latest
@@ -25,7 +27,7 @@ services:
       - ./workspace:/home/node/openclaw/workspace
     networks:
       - lab-network
-    entrypoint: ["openclaw"]
+    entrypoint: ["node", "/app/openclaw.mjs"]
 
 networks:
   lab-network:

@@ -26,6 +26,7 @@
 # Logs
 **/logs/
 *.log
+**/*.log
 n8nEventLog*
 
 # OS files

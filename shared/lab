@@ -156,7 +156,13 @@ cmd_up() {
   fi
 
   echo -e "${YELLOW}Starting '$proj'...${NC}"
-  cd "$path" && docker compose up -d
+  cd "$path"
+  if [ -f "./docker-setup.sh" ]; then
+    echo -e "${GRAY}Detected docker-setup.sh, running it...${NC}"
+    bash ./docker-setup.sh
+  else
+    docker compose up -d
+  fi
 }
 
 # Command: down

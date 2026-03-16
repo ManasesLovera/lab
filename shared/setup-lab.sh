@@ -73,7 +73,7 @@ fi
 if ! grep -qF "$ALIAS_OPENCLAW_CLI" ~/.bashrc; then
     echo "Adding openclaw-cli alias to .bashrc..."
     echo "$ALIAS_OPENCLAW_CLI" >> ~/.bashrc
-fi
+fi  
 
 # 3. Network Initialization (docker-network.sh handles its own idempotency)
 echo "Initializing lab network..."

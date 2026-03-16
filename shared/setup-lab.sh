@@ -57,6 +57,7 @@ ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
 ALIAS_OPENCLAW="alias openclaw='docker exec -it openclaw openclaw'"
 ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
 ALIAS_OPENCLAW_CLI="alias openclaw-cli='docker compose -f /home/mlovera/lab/external/openclaw/docker-compose.yml run --rm openclaw-cli'"
+ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
 
 if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
     echo "Adding ollama alias to .bashrc..."
@@ -74,6 +75,10 @@ if ! grep -qF "$ALIAS_OPENCLAW_CLI" ~/.bashrc; then
     echo "Adding openclaw-cli alias to .bashrc..."
     echo "$ALIAS_OPENCLAW_CLI" >> ~/.bashrc
 fi  
+if ! grep -qF "$ALIAS_CLOUDFLARED" ~/.bashrc; then
+    echo "Adding cloudflared alias to .bashrc..."
+    echo "$ALIAS_CLOUDFLARED" >> ~/.bashrc
+fi
 
 # 3. Network Initialization (docker-network.sh handles its own idempotency)
 echo "Initializing lab network..."
@@ -87,9 +92,10 @@ fi
 # Refresh session
 source ~/.bashrc
 
-echo "Starting core infrastructure (postgres, proxy, and dockge)..."
+echo "Starting core infrastructure (postgres, proxy, cloudflared, and dockge)..."
 bash "/home/mlovera/lab/shared/lab" up postgres
 bash "/home/mlovera/lab/shared/lab" up proxy
+bash "/home/mlovera/lab/shared/lab" up cloudflared
 bash "/home/mlovera/lab/shared/lab" up dockge
 
 echo "Setup complete. The 'lab', 'ollama', 'openclaw', and 'dockge' aliases are active and the system is ready."

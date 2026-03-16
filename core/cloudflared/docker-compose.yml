@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: lab-cloudflared
+    restart: unless-stopped
+    # Matches the user's provided command: tunnel --no-autoupdate run --token <token>
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    external: true

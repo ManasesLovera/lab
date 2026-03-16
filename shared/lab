@@ -196,11 +196,19 @@ cmd_up() {
 
   echo -e "${YELLOW}Starting '$proj'...${NC}"
   cd "$path"
+  
+  # Load global environment if exists
+  local env_arg=""
+  if [ -f "$LAB_DIR/.env" ]; then
+    env_arg="--env-file $LAB_DIR/.env"
+  fi
+
   if [ -f "./docker-setup.sh" ]; then
     echo -e "${GRAY}Detected docker-setup.sh, running it...${NC}"
+    # Note: docker-setup.sh should probably also handle .env, but for now we focus on standard compose
     bash ./docker-setup.sh
   else
-    docker compose up -d
+    docker compose $env_arg up -d
   fi
 }
 
@@ -225,7 +233,15 @@ cmd_down() {
   fi
 
   echo -e "${YELLOW}Stopping '$proj'...${NC}"
-  cd "$path" && docker compose down
+  cd "$path"
+  
+  # Load global environment if exists
+  local env_arg=""
+  if [ -f "$LAB_DIR/.env" ]; then
+    env_arg="--env-file $LAB_DIR/.env"
+  fi
+  
+  docker compose $env_arg down
 }
 
 # Command: logs
@@ -248,7 +264,15 @@ cmd_logs() {
     return 1
   fi
 
-  cd "$path" && docker compose logs -f
+  cd "$path"
+  
+  # Load global environment if exists
+  local env_arg=""
+  if [ -f "$LAB_DIR/.env" ]; then
+    env_arg="--env-file $LAB_DIR/.env"
+  fi
+  
+  docker compose $env_arg logs -f
 }
 
 # Main routing

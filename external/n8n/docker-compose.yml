@@ -10,10 +10,10 @@ services:
     environment:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
-      - N8N_PROTOCOL=http
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
       - N8N_SECURE_COOKIE=false
       - NODE_ENV=production
-      - WEBHOOK_URL=http://n8n.local/
+      - WEBHOOK_URL=${N8N_PROTOCOL:-http}://n8n.${DOMAIN_SUFFIX:-local}/
       # Database Configuration
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n

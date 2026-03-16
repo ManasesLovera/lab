@@ -23,3 +23,9 @@
   - Update `external/openproject/docker-compose.yml` with the official configuration.
   - Set up necessary environment variables in `.env`.
   - Confirm service is running and accessible.
+
+- [/] **IN PROGRESS** Task 6: Secure External Access (SSH & Web)
+  - [x] Update project `config.yml` for `rpi.mlovera.dev` SSH routing.
+  - [x] Configure SSH Hostname in Cloudflare Zero Trust Dashboard.
+  - [ ] Configure Cloudflare Access Application for Browser-based SSH.
+  - [ ] Verify local SSH client connectivity via `cloudflared` proxy command.

@@ -1,0 +1,15 @@
+# Cloudflare Tunnel Configuration
+tunnel: ${TUNNEL_ID}
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  # SSH access
+  - hostname: rpi.mlovera.dev
+    service: ssh://host.docker.internal:22
+  
+  # Wildcard for all other services handled by the proxy
+  - hostname: "*.mlovera.dev"
+    service: http://lab-proxy:80
+
+  # Default rule
+  - service: http_status:404

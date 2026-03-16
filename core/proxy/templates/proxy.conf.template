@@ -3,7 +3,7 @@
 # N8N
 server {
     listen 80;
-    server_name n8n.local;
+    server_name n8n.${DOMAIN_SUFFIX};
 
     location / {
         # Use Docker's internal DNS to resolve containers dynamically
@@ -26,7 +26,7 @@ server {
 # Dockge
 server {
     listen 80;
-    server_name dockge.local;
+    server_name dockge.${DOMAIN_SUFFIX};
 
     location / {
         resolver 127.0.0.11 valid=30s;
@@ -48,7 +48,7 @@ server {
 # OpenProject
 server {
     listen 80;
-    server_name openproject.local;
+    server_name openproject.${DOMAIN_SUFFIX};
 
     location / {
         resolver 127.0.0.11 valid=30s;
@@ -65,7 +65,7 @@ server {
 # OpenClaw
 server {
     listen 80;
-    server_name openclaw.local;
+    server_name openclaw.${DOMAIN_SUFFIX};
 
     location / {
         resolver 127.0.0.11 valid=30s;
@@ -87,7 +87,7 @@ server {
 # Ollama
 server {
     listen 80;
-    server_name ollama.local;
+    server_name ollama.${DOMAIN_SUFFIX};
 
     location / {
         resolver 127.0.0.11 valid=30s;

@@ -24,7 +24,7 @@ services:
       OPENPROJECT_HSTS: "false"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
       # Pointing to the core database service
-      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
+      DATABASE_URL: "postgres://admin:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
       RAILS_MIN_THREADS: 4
@@ -45,7 +45,7 @@ services:
       OPENPROJECT_HTTPS: "${OPENPROJECT_HTTPS}"
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
       # Pointing to the core database service
-      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
+      DATABASE_URL: "postgres://admin:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:
@@ -62,7 +62,7 @@ services:
     environment:
       SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
       # Pointing to the core database service
-      DATABASE_URL: "postgres://openproject:${POSTGRES_PASSWORD}@postgres:5432/openproject"
+      DATABASE_URL: "postgres://admin:${POSTGRES_PASSWORD}@postgres:5432/openproject"
       RAILS_CACHE_STORE: "memcache"
       MEMCACHED_SERVERS: "cache:11211"
     volumes:

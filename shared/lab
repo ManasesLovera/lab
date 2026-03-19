@@ -29,7 +29,7 @@ get_projects() {
             projects+=("$proj_name:$proj_path")
           fi
         fi
-      done < <(find "$LAB_DIR/$dir" -mindepth 1 -maxdepth 2 -name "docker-compose.yml" 2>/dev/null)
+      done < <(find -L "$LAB_DIR/$dir" -mindepth 1 -maxdepth 2 -name "docker-compose.yml" 2>/dev/null)
     fi
   done
   echo "${projects[@]}"
@@ -145,7 +145,7 @@ cmd_ps() {
     local path="${item#*:}"
     
     # Check if there are any running containers for this compose file
-    local running=$(cd "$path" && docker compose ps -q 2>/dev/null)
+    local running=$(cd -P "$path" && docker compose ps -q 2>/dev/null)
     if [ -n "$running" ]; then
       printf "  ${GREEN}● %-15s${NC} (Running in %s)\n" "$name" "${path#$LAB_DIR/}"
       found_any=true
@@ -194,8 +194,11 @@ cmd_up() {
     fi
   fi
 
+  # Resolve symlinks to avoid project name conflicts
+  path=$(realpath "$path")
+
   echo -e "${YELLOW}Starting '$proj'...${NC}"
-  cd "$path"
+  cd -P "$path"
   
   # Load global environment if exists
   local env_arg=""
@@ -232,8 +235,11 @@ cmd_down() {
     return 1
   fi
 
+  # Resolve symlinks to avoid project name conflicts
+  path=$(realpath "$path")
+
   echo -e "${YELLOW}Stopping '$proj'...${NC}"
-  cd "$path"
+  cd -P "$path"
   
   # Load global environment if exists
   local env_arg=""
@@ -264,7 +270,10 @@ cmd_logs() {
     return 1
   fi
 
-  cd "$path"
+  # Resolve symlinks to avoid project name conflicts
+  path=$(realpath "$path")
+
+  cd -P "$path"
   
   # Load global environment if exists
   local env_arg=""

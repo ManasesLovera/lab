@@ -56,7 +56,7 @@ fi
 ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
 ALIAS_OPENCLAW="alias openclaw='docker exec -it openclaw openclaw'"
 ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
-ALIAS_OPENCLAW_CLI="alias openclaw-cli='docker compose -f /home/mlovera/lab/external/openclaw/docker-compose.yml run --rm openclaw-cli'"
+ALIAS_OPENCLAW_CLI="alias openclaw-cli='docker compose -f /home/mlovera/lab/external/ollama/docker-compose.yml run --rm openclaw-cli'"
 ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
 
 if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then

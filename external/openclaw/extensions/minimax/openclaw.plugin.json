@@ -1,9 +1,0 @@
-{
-  "id": "minimax",
-  "providers": ["minimax", "minimax-portal"],
-  "configSchema": {
-    "type": "object",
-    "additionalProperties": false,
-    "properties": {}
-  }
-}

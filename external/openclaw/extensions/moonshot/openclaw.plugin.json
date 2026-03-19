@@ -1,9 +1,0 @@
-{
-  "id": "moonshot",
-  "providers": ["moonshot"],
-  "configSchema": {
-    "type": "object",
-    "additionalProperties": false,
-    "properties": {}
-  }
-}

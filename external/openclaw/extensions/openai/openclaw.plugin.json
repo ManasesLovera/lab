@@ -1,9 +1,0 @@
-{
-  "id": "openai",
-  "providers": ["openai", "openai-codex"],
-  "configSchema": {
-    "type": "object",
-    "additionalProperties": false,
-    "properties": {}
-  }
-}

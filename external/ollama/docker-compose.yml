@@ -19,6 +19,8 @@ services:
     image: ghcr.io/openclaw/openclaw:latest
     networks:
       - lab-network
+    env_file:
+      - /home/mlovera/lab/external/ollama/.env
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -26,7 +28,7 @@ services:
       OPENCLAW_ALLOW_INSECURE_PRIVATE_WS: ${OPENCLAW_ALLOW_INSECURE_PRIVATE_WS:-}
       TZ: ${OPENCLAW_TZ:-UTC}
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_API_KEY: ollama-local
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
       OPENCLAW_GATEWAY_AUTH_MODE: token
       OPENCLAW_GATEWAY_REMOTE_URL: http://openclaw.${DOMAIN_SUFFIX:-local}
     volumes:
@@ -72,6 +74,8 @@ services:
       - NET_ADMIN
     security_opt:
       - no-new-privileges:true
+    env_file:
+      - /home/mlovera/lab/external/ollama/.env
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -80,7 +84,7 @@ services:
       BROWSER: echo
       TZ: ${OPENCLAW_TZ:-UTC}
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_API_KEY: ollama-local
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
     volumes:
       - ${OPENCLAW_CONFIG_DIR:-/home/mlovera/.openclaw}:/home/node/.openclaw
       - ${OPENCLAW_WORKSPACE_DIR:-/home/mlovera/.openclaw/workspace}:/home/node/.openclaw/workspace

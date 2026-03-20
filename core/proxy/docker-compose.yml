@@ -8,9 +8,6 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      - DOMAIN_SUFFIX=${DOMAIN_SUFFIX:-local}
-      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
     env_file:
       - /home/mlovera/lab/external/ollama/.env
     volumes:

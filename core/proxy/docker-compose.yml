@@ -10,10 +10,13 @@ services:
       - "443:443"
     environment:
       - DOMAIN_SUFFIX=${DOMAIN_SUFFIX:-local}
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+    env_file:
+      - /home/mlovera/lab/external/ollama/.env
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./templates:/etc/nginx/templates:ro
-      - ./html:/usr/share/nginx/html:ro
+      - /home/mlovera/lab/core/proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /home/mlovera/lab/core/proxy/templates:/etc/nginx/templates:ro
+      - /home/mlovera/lab/core/proxy/html:/usr/share/nginx/html:ro
     networks:
       - lab-network
 

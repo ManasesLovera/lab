@@ -90,6 +90,11 @@ server {
     server_name ollama.${DOMAIN_SUFFIX};
 
     location / {
+        # API Key Validation
+        if ($http_x_api_key != "${OLLAMA_API_KEY}") {
+            return 401 '{"error": "Unauthorized: Invalid or missing API Key"}';
+        }
+
         resolver 127.0.0.11 valid=30s;
         set $upstream_ollama ollama;
 

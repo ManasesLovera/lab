@@ -14,7 +14,7 @@
 
 - [x] **COMPLETED** Task 3: Automate "Always-On" Infrastructure
   - Update `shared/setup-lab.sh` to automatically trigger `lab up proxy` and `lab up dockge` at the end of the script.
-  - Ensure other projects like `n8n`, `ollama`, `openclaw`, and `openproject` remain optional.
+  - Ensure other projects like `n8n`, `ollama`, and `openproject` remain optional.
 
 - [x] **COMPLETED** Task 4: Scaffold OpenProject (Optional)
   - Create a `services/openproject/` directory with a minimal `docker-compose.yml` so that it appears in the `lab` CLI and Dockge.

@@ -21,7 +21,6 @@ Pre-built tools and platforms managed via Docker Compose.
 
 * **n8n**: Workflow automation (backed by core Postgres).
 * **ollama**: Local LLM runner.
-* **openclaw**: Autonomous AI agent gateway.
 * **openproject**: Project management platform (backed by core Postgres).
 
 ### 3. services/ - Internal/Custom Development

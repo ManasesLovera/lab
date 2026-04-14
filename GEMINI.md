@@ -21,7 +21,7 @@ This file provides the necessary context for Gemini to understand and interact w
     - `proxy/`: Nginx reverse proxy with dynamic templates.
     - `cloudflared/`: Secure tunnel to Cloudflare Zero Trust.
     - `redis/`: Shared cache service.
-- `external/`: Third-party applications (n8n, Ollama, OpenProject, OpenClaw).
+- `external/`: Third-party applications (n8n, Ollama, OpenProject).
 - `services/`: Custom applications developed within the lab.
 - `shared/`: Automation scripts and the `lab` CLI.
 

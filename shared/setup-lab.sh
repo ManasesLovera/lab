@@ -54,27 +54,17 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
 fi
 
 ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
-ALIAS_OPENCLAW="alias openclaw='docker exec -it openclaw openclaw'"
 ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
-ALIAS_OPENCLAW_CLI="alias openclaw-cli='docker compose -f /home/mlovera/lab/external/ollama/docker-compose.yml run --rm openclaw-cli'"
 ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
 
 if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
     echo "Adding ollama alias to .bashrc..."
     echo "$ALIAS_OLLAMA" >> ~/.bashrc
 fi
-if ! grep -qF "$ALIAS_OPENCLAW" ~/.bashrc; then
-    echo "Adding openclaw alias to .bashrc..."
-    echo "$ALIAS_OPENCLAW" >> ~/.bashrc
-fi
 if ! grep -qF "$ALIAS_DOCKGE" ~/.bashrc; then
     echo "Adding dockge alias to .bashrc..."
     echo "$ALIAS_DOCKGE" >> ~/.bashrc
 fi
-if ! grep -qF "$ALIAS_OPENCLAW_CLI" ~/.bashrc; then
-    echo "Adding openclaw-cli alias to .bashrc..."
-    echo "$ALIAS_OPENCLAW_CLI" >> ~/.bashrc
-fi  
 if ! grep -qF "$ALIAS_CLOUDFLARED" ~/.bashrc; then
     echo "Adding cloudflared alias to .bashrc..."
     echo "$ALIAS_CLOUDFLARED" >> ~/.bashrc
@@ -98,4 +88,4 @@ bash "/home/mlovera/lab/shared/lab" up proxy
 bash "/home/mlovera/lab/shared/lab" up cloudflared
 bash "/home/mlovera/lab/shared/lab" up dockge
 
-echo "Setup complete. The 'lab', 'ollama', 'openclaw', and 'dockge' aliases are active and the system is ready."
+echo "Setup complete. The 'lab', 'ollama', and 'dockge' aliases are active and the system is ready."

@@ -1,5 +1,6 @@
-FROM n8nio/n8n:latest-debian
+FROM n8nio/n8n:latest
 
 USER root
-RUN apt-get update && apt-get install -y python3 python3-pip && rm -rf /var/lib/apt/lists/*
+# Install python3 using apk (standard image has it)
+RUN apk add --update --no-cache python3 py3-pip
 USER node

@@ -2,8 +2,8 @@ name: n8n
 
 services:
   n8n:
-    image: docker.n8n.io/n8nio/n8n:latest
-    container_name: n8n_local
+    build: .
+    container_name: n8n
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -14,6 +14,7 @@ services:
       - N8N_SECURE_COOKIE=false
       - NODE_ENV=production
       - WEBHOOK_URL=${N8N_PROTOCOL:-http}://n8n.${DOMAIN_SUFFIX:-local}/
+      - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
       # Database Configuration
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n

@@ -12,7 +12,6 @@ Baseline services that support the entire lab. These are generally "always-on."
 
 * **postgres**: Centralized PostgreSQL 17 instance with dynamic multi-database/user initialization.
 * **proxy**: Nginx-based reverse proxy managing .local domain routing.
-* **dockge**: Web-based dashboard for managing Docker Compose stacks.
 * **redis**: (Optional) Centralized Redis instance for shared caching.
 
 ### 2. external/ - Third-Party Applications
@@ -21,7 +20,6 @@ Pre-built tools and platforms managed via Docker Compose.
 
 * **n8n**: Workflow automation (backed by core Postgres).
 * **ollama**: Local LLM runner.
-* **openproject**: Project management platform (backed by core Postgres).
 
 ### 3. services/ - Internal/Custom Development
 
@@ -67,11 +65,9 @@ source ./shared/setup-lab.sh
 
 ### 3. Accessing the Lab
 
-Once initialized, the core infrastructure (Postgres, Proxy, Dockge) will start automatically. You can access your services at:
+Once initialized, the core infrastructure (Postgres, Proxy) will start automatically. You can access your services at:
 
-* **Dockge Dashboard**: [http://dockge.local](http://dockge.local)
 * **n8n**: [http://n8n.local](http://n8n.local)
-* **OpenProject**: [http://openproject.local](http://openproject.local)
 *(Note: Ensure you add these to your /etc/hosts file or use the helper command provided during setup.)*
 
 ---

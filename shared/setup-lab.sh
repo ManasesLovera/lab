@@ -54,16 +54,11 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
 fi
 
 ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
-ALIAS_DOCKGE="alias dockge='docker exec -it dockge bash'"
 ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
 
 if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
     echo "Adding ollama alias to .bashrc..."
     echo "$ALIAS_OLLAMA" >> ~/.bashrc
-fi
-if ! grep -qF "$ALIAS_DOCKGE" ~/.bashrc; then
-    echo "Adding dockge alias to .bashrc..."
-    echo "$ALIAS_DOCKGE" >> ~/.bashrc
 fi
 if ! grep -qF "$ALIAS_CLOUDFLARED" ~/.bashrc; then
     echo "Adding cloudflared alias to .bashrc..."
@@ -82,10 +77,9 @@ fi
 # Refresh session
 source ~/.bashrc
 
-echo "Starting core infrastructure (postgres, proxy, cloudflared, and dockge)..."
+echo "Starting core infrastructure (postgres, proxy, cloudflared)..."
 bash "/home/mlovera/lab/shared/lab" up postgres
 bash "/home/mlovera/lab/shared/lab" up proxy
 bash "/home/mlovera/lab/shared/lab" up cloudflared
-bash "/home/mlovera/lab/shared/lab" up dockge
 
-echo "Setup complete. The 'lab', 'ollama', and 'dockge' aliases are active and the system is ready."
+echo "Setup complete. The 'lab', 'ollama', and 'cloudflared' aliases are active and the system is ready."

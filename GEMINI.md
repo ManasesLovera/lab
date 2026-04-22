@@ -9,7 +9,7 @@ This file provides the necessary context for Gemini to understand and interact w
 ### Core Architecture
 - **Isolation:** Each project (service) has its own directory and `docker-compose.yml`.
 - **Networking:** All services share a common bridge network named `lab-network`.
-- **Centralized Data:** A core PostgreSQL instance handles multiple databases for different services (n8n, OpenProject, etc.).
+- **Centralized Data:** A core PostgreSQL instance handles multiple databases for different services (n8n, etc.).
 - **Access Management:** 
     - **Local:** Routed via `lab-proxy` (Nginx) using `.local` (or configured) domains.
     - **Remote:** Cloudflare Tunnel (`lab-cloudflared`) exposes services to the internet via `*.mlovera.dev`.
@@ -21,7 +21,7 @@ This file provides the necessary context for Gemini to understand and interact w
     - `proxy/`: Nginx reverse proxy with dynamic templates.
     - `cloudflared/`: Secure tunnel to Cloudflare Zero Trust.
     - `redis/`: Shared cache service.
-- `external/`: Third-party applications (n8n, Ollama, OpenProject).
+- `external/`: Third-party applications (n8n, Ollama).
 - `services/`: Custom applications developed within the lab.
 - `shared/`: Automation scripts and the `lab` CLI.
 
@@ -34,7 +34,6 @@ The `lab` command is the primary way to manage the environment.
 - `lab up <name>`: Start a project.
 - `lab down <name>`: Stop a project.
 - `lab logs <name>`: View service logs.
-- `lab sync-dockge`: Sync projects as symlinks for the Dockge dashboard.
 
 ### Initialization
 Run `source ./shared/setup-lab.sh` to initialize the environment, configure Docker DNS, create the network, and inject the CLI aliases.

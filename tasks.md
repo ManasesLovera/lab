@@ -12,17 +12,7 @@
   - Update `shared/setup-lab.sh` to add an alias for the `lab` CLI so it can be run from anywhere.
   - Ensure this injection is idempotent.
 
-- [x] **COMPLETED** Task 3: Automate "Always-On" Infrastructure
-  - Update `shared/setup-lab.sh` to automatically trigger `lab up proxy` and `lab up dockge` at the end of the script.
-  - Ensure other projects like `n8n`, `ollama`, and `openproject` remain optional.
 
-- [x] **COMPLETED** Task 4: Scaffold OpenProject (Optional)
-  - Create a `services/openproject/` directory with a minimal `docker-compose.yml` so that it appears in the `lab` CLI and Dockge.
-
-- [x] **COMPLETED** Task 5: Configure OpenProject with Official Multi-Container Setup
-  - Update `external/openproject/docker-compose.yml` with the official configuration.
-  - Set up necessary environment variables in `.env`.
-  - Confirm service is running and accessible.
 
 - [/] **IN PROGRESS** Task 6: Secure External Access (SSH & Web)
   - [x] Update project `config.yml` for `rpi.mlovera.dev` SSH routing.

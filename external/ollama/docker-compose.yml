@@ -20,3 +20,4 @@ networks:
 
 volumes:
   ollama_data:
+:

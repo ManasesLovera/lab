@@ -145,7 +145,7 @@ cmd_ps() {
     local path="${item#*:}"
     
     # Check if there are any running containers for this compose file
-    local running=$(cd -P "$path" && docker compose ps -q 2>/dev/null)
+    local running=$(cd -P "$path" && docker compose -p "$name" ps -q 2>/dev/null)
     if [ -n "$running" ]; then
       printf "  ${GREEN}● %-15s${NC} (Running in %s)\n" "$name" "${path#$LAB_DIR/}"
       found_any=true
@@ -211,7 +211,7 @@ cmd_up() {
     # Note: docker-setup.sh should probably also handle .env, but for now we focus on standard compose
     bash ./docker-setup.sh
   else
-    docker compose $env_arg up -d
+    docker compose -p "$proj" $env_arg up -d
   fi
 }
 
@@ -247,7 +247,7 @@ cmd_down() {
     env_arg="--env-file $LAB_DIR/.env"
   fi
   
-  docker compose $env_arg down
+  docker compose -p "$proj" $env_arg down
 }
 
 # Command: logs
@@ -281,7 +281,7 @@ cmd_logs() {
     env_arg="--env-file $LAB_DIR/.env"
   fi
   
-  docker compose $env_arg logs -f
+  docker compose -p "$proj" $env_arg logs -f
 }
 
 # Main routing

@@ -1,3 +1,5 @@
+name: openproject
+
 # OpenProject Docker Compose - Migrated to Core Database
 
 volumes:

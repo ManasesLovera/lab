@@ -1,4 +1,4 @@
-version: '3.8'
+name: n8n
 
 services:
   n8n:

@@ -15,9 +15,9 @@ services:
       - NODE_ENV=production
       - WEBHOOK_URL=${N8N_PROTOCOL:-http}://n8n.${DOMAIN_SUFFIX:-local}/
       - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
-      - N8N_RUNNERS_ENABLED=true
       - N8N_RUNNERS_MODE=external
       - N8N_EXTERNAL_PYTHON_RUNNER_URL=http://python-runner:5000
+      - N8N_RUNNERS_AUTH_TOKEN=mysecrettoken
       # Database Configuration
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n
@@ -43,6 +43,8 @@ services:
     image: n8nio/runners:latest
     container_name: n8n_python_runner
     restart: unless-stopped
+    environment:
+      - N8N_RUNNERS_AUTH_TOKEN=mysecrettoken
     networks:
       - lab-network
 

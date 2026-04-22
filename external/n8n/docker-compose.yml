@@ -2,8 +2,8 @@ name: n8n
 
 services:
   n8n:
-    build: .
-    container_name: n8n
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_local
     restart: unless-stopped
     ports:
       - "5678:5678"
@@ -15,6 +15,9 @@ services:
       - NODE_ENV=production
       - WEBHOOK_URL=${N8N_PROTOCOL:-http}://n8n.${DOMAIN_SUFFIX:-local}/
       - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
+      - N8N_EXTERNAL_PYTHON_RUNNER_URL=http://python-runner:5000
       # Database Configuration
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n
@@ -36,6 +39,15 @@ services:
         limits:
           memory: 2G
 
+  python-runner:
+    image: n8nio/runners:latest
+    container_name: n8n_python_runner
+    restart: unless-stopped
+    networks:
+      - lab-network
+
 networks:
   lab-network:
     external: true
+
+

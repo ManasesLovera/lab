@@ -1,0 +1,25 @@
+name: kibana
+
+services:
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
+    container_name: kibana
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SERVER_NAME=kibana
+      - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS}
+      - ELASTICSEARCH_USERNAME=${ELASTICSEARCH_USERNAME}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+    networks:
+      - lab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kibana.rule=Host(`kibana.rpi.local`)"
+      - "traefik.http.routers.kibana.entrypoints=web"
+      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
+
+networks:
+  lab-network:
+    external: true

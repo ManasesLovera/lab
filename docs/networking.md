@@ -14,6 +14,7 @@ The following table shows the default accessibility for all services in the lab:
 | **Redis** | `redis.rpi.local` | - | 6379 |
 | **MongoDB** | `mongo.rpi.local` | - | 27017 |
 | **Elasticsearch**| `elasticsearch.rpi.local`| - | 9200 |
+| **Kibana** | `http://kibana.rpi.local` | - | 5601 |
 | **Azurite** | `azurite.rpi.local` | - | 10000, 10001, 10002 |
 | **MSSQL** | `mssql.rpi.local` | - | 1433 |
 

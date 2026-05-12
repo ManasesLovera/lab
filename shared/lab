@@ -64,8 +64,9 @@ cmd_help() {
   echo ""
   echo -e "${YELLOW}Examples:${NC}"
   echo "  lab up n8n         # Starts the n8n service"
+  echo "  lab up postgres    # Starts the shared database"
   echo "  lab ps -a          # Checks status of all projects"
-  echo "  lab logs proxy     # Tails the nginx proxy logs"
+  echo "  lab logs traefik   # Tails the Traefik proxy logs"
 }
 
 # Command: list

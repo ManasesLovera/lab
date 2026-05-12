@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     ports:
       - "5678:5678"
+    env_file:
+      - .env
     environment:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
@@ -17,14 +19,14 @@ services:
       - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
       - N8N_RUNNERS_MODE=external
       - N8N_EXTERNAL_PYTHON_RUNNER_URL=http://python-runner:5000
-      - N8N_RUNNERS_AUTH_TOKEN=mysecrettoken
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
       # Database Configuration
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_DATABASE=n8n
       - DB_POSTGRESDB_HOST=postgres
       - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_USER=n8n
-      - DB_POSTGRESDB_PASSWORD=admin_password # Should be updated to a secure password later
+      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
+      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
       # Resource Management
       - EXECUTIONS_DATA_PRUNE=true
       - EXECUTIONS_DATA_MAX_AGE=168
@@ -34,6 +36,11 @@ services:
       - ../../shared:/home/node/shared:ro
     networks:
       - lab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.n8n.rule=Host(`n8n.rpi.local`) || Host(`n8n.mlovera.dev`)"
+      - "traefik.http.routers.n8n.entrypoints=web"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     deploy:
       resources:
         limits:
@@ -43,8 +50,10 @@ services:
     image: n8nio/runners:latest
     container_name: n8n_python_runner
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
-      - N8N_RUNNERS_AUTH_TOKEN=mysecrettoken
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
     networks:
       - lab-network
 

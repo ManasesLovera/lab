@@ -5,10 +5,10 @@ services:
     image: postgres:17-alpine
     container_name: postgres
     restart: unless-stopped
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=admin_password
-      - POSTGRES_MULTIPLE_DATABASES=n8n
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
     volumes:
       - ./data:/var/lib/postgresql/data
       - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro

@@ -1,0 +1,19 @@
+name: mongo
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/data/db
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    external: true

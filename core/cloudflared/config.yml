@@ -9,7 +9,7 @@ ingress:
   
   # Wildcard for all other services handled by the proxy
   - hostname: "*.mlovera.dev"
-    service: http://lab-proxy:80
+    service: http://lab-traefik:80
 
   # Default rule
   - service: http_status:404

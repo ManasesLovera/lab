@@ -11,8 +11,8 @@ This file provides the necessary context for Gemini to understand and interact w
 - **Networking:** All services share a common bridge network named `lab-network`.
 - **Centralized Data:** A core PostgreSQL instance handles multiple databases for different services (n8n, etc.).
 - **Access Management:** 
-    - **Local:** Routed via `lab-proxy` (Nginx) using `.local` (or configured) domains.
-    - **Remote:** Cloudflare Tunnel (`lab-cloudflared`) exposes services to the internet via `*.mlovera.dev`.
+    - **Local:** Routed via `lab-traefik` using `.local` (or configured) domains defined by Docker labels.
+    - **Remote:** Cloudflare Tunnel (`lab-cloudflared`) exposes services to the internet via `*.mlovera.dev`, pointing to Traefik.
 
 ## Directory Structure
 
@@ -43,11 +43,11 @@ Run `source ./shared/setup-lab.sh` to initialize the environment, configure Dock
 - **Configuration:** Use `lab/.env` for global environment variables.
 - **Service Discovery:** Services should refer to each other by their container names within the `lab-network`.
 - **Database Access:** Use the `POSTGRES_MULTIPLE_DATABASES` variable in `lab/core/postgres/docker-compose.yml` to automatically create new databases/users on startup.
-- **Proxying:** Add new subdomains to `lab/core/proxy/templates/proxy.conf.template` and ensure they match the `DOMAIN_SUFFIX`.
+- **Proxying:** Add Traefik labels to new services in their `docker-compose.yml` to define their domains.
 
 ## Cloudflare Tunnel (Remote Access)
 The tunnel is currently managed via **Cloudflare Zero Trust Dashboard** (Remote Management). 
-- To expose a new service, add a Public Hostname in the dashboard pointing to `http://lab-proxy:80`.
+- To expose a new service, add a Public Hostname in the dashboard pointing to `http://lab-traefik:80`.
 - To expose SSH, point to `ssh://host.docker.internal:22`.
 
 ## Current Roadmap (Tasks)

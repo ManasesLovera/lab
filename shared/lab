@@ -99,7 +99,7 @@ cmd_ps() {
     show_all=true
   elif [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo -e "${CYAN}Command: ps${NC}"
-    echo "Description: Checks each project to see if it has running containers."
+    echo "Description: Checks each project to see if it has running containers and shows network access."
     echo "Options: -a  Show all projects (including stopped ones)"
     echo "Usage: lab ps [-a]"
     return
@@ -119,12 +119,40 @@ cmd_ps() {
     local path="${item#*:}"
     
     # Check if there are any running containers for this compose file
-    local running=$(cd -P "$path" && docker compose -p "$name" ps -q 2>/dev/null)
-    if [ -n "$running" ]; then
-      printf "  ${GREEN}● %-15s${NC} (Running in %s)\n" "$name" "${path#$LAB_DIR/}"
+    local container_ids=$(cd -P "$path" && docker compose -p "$name" ps -q 2>/dev/null)
+    
+    if [ -n "$container_ids" ]; then
+      printf "  ${GREEN}● %-15s${NC} (Running)\n" "$name"
       found_any=true
+      
+      # Inspect networking for each running container in the project
+      for id in $container_ids; do
+        # 1. Get Traefik labels for domains
+        local labels=$(docker inspect --format '{{ range $k, $v := .Config.Labels }}{{ $v }}{{ "\n" }}{{ end }}' "$id" | grep "Host(")
+        
+        # 2. Get Published Ports for localhost access
+        local ports=$(docker inspect --format '{{ range $p, $conf := .NetworkSettings.Ports }}{{ if $conf }}{{ (index $conf 0).HostPort }}{{ "\n" }}{{ end }}{{ end }}' "$id" | sort -u)
+
+        # Display Localhost URLs
+        for port in $ports; do
+          echo -e "      ${GRAY}→ Localhost:   ${NC}http://localhost:$port"
+        done
+
+        # Display Domain URLs from labels
+        if [ -n "$labels" ]; then
+          # Extract hostnames from Traefik rules like Host(`n8n.rpi.local`)
+          local hosts=$(echo "$labels" | grep -oP "Host\(\`\K[^'\`]+" | tr ',' '\n')
+          for host in $hosts; do
+            if [[ "$host" == *".rpi.local"* ]]; then
+              echo -e "      ${GRAY}→ Local Net:   ${NC}http://$host"
+            elif [[ "$host" == *".mlovera.dev"* ]]; then
+              echo -e "      ${GRAY}→ Production:  ${NC}https://$host"
+            fi
+          done
+        fi
+      done
     elif [ "$show_all" = true ]; then
-      printf "  ${GRAY}○ %-15s${NC} (Stopped in %s)\n" "$name" "${path#$LAB_DIR/}"
+      printf "  ${GRAY}○ %-15s${NC} (Stopped)\n" "$name"
       found_any=true
     fi
   done

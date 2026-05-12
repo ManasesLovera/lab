@@ -22,12 +22,9 @@ if [ ! -f "$DOCKER_CONFIG" ]; then
     echo '{"dns": ["8.8.8.8", "1.1.1.1"]}' | sudo tee "$DOCKER_CONFIG" > /dev/null
     RESTART_REQUIRED=true
 else
-    # Check if 'dns' key exists and has the correct values
     if ! grep -q '"dns":\s*\["8.8.8.8",\s*"1.1.1.1"\]' "$DOCKER_CONFIG"; then
         echo "Updating Docker DNS configuration..."
-        # Backup original
         sudo cp "$DOCKER_CONFIG" "$DOCKER_CONFIG.bak"
-        # Use python or jq if available for clean JSON editing, otherwise fallback to safe overwrite
         echo '{"dns": ["8.8.8.8", "1.1.1.1"]}' | sudo tee "$DOCKER_CONFIG" > /dev/null
         RESTART_REQUIRED=true
     else
@@ -53,19 +50,14 @@ if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
-ALIAS_OLLAMA="alias ollama='docker exec -it ollama ollama'"
 ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
 
-if ! grep -qF "$ALIAS_OLLAMA" ~/.bashrc; then
-    echo "Adding ollama alias to .bashrc..."
-    echo "$ALIAS_OLLAMA" >> ~/.bashrc
-fi
 if ! grep -qF "$ALIAS_CLOUDFLARED" ~/.bashrc; then
     echo "Adding cloudflared alias to .bashrc..."
     echo "$ALIAS_CLOUDFLARED" >> ~/.bashrc
 fi
 
-# 3. Network Initialization (docker-network.sh handles its own idempotency)
+# 3. Network Initialization
 echo "Initializing lab network..."
 NETWORK_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/docker-network.sh"
 if [ -f "$NETWORK_SCRIPT" ]; then
@@ -77,9 +69,5 @@ fi
 # Refresh session
 source ~/.bashrc
 
-echo "Starting core infrastructure (postgres, proxy, cloudflared)..."
-bash "/home/mlovera/lab/shared/lab" up postgres
-bash "/home/mlovera/lab/shared/lab" up proxy
-bash "/home/mlovera/lab/shared/lab" up cloudflared
-
-echo "Setup complete. The 'lab', 'ollama', and 'cloudflared' aliases are active and the system is ready."
+echo "Setup complete. The 'lab' and 'cloudflared' aliases are active."
+echo "Note: No services were started. Use 'lab up <name>' to start a project on demand."

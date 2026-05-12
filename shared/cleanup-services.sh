@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 
-# Cleanup script to remove openclaw, dockge, and openproject images and containers
+# Cleanup script to remove legacy images and containers
 
-echo "Cleaning up openclaw, dockge, and openproject containers and images..."
+echo "Reclaiming space by removing unused Docker resources..."
 
-# Stop and remove containers
-for container in openclaw dockge openproject; do
+# 1. Purge legacy specific containers if they exist
+# Add names here if you want to explicitly remove old services
+for container in legacy-proxy legacy-ollama; do
   if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
-    echo "Stopping and removing container: $container"
+    echo "Removing legacy container: $container"
     docker stop "$container" 2>/dev/null || true
     docker rm "$container" 2>/dev/null || true
   fi
 done
 
-# Remove images
-for image in louislam/dockge openproject/openproject; do
-  if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${image}$"; then
-    echo "Removing image: $image"
-    docker rmi "$image" 2>/dev/null || true
-  fi
-done
+# 2. Run general cleanup
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+if [ -f "$SCRIPT_DIR/docker-cleanup.sh" ]; then
+    bash "$SCRIPT_DIR/docker-cleanup.sh"
+else
+    echo "Running basic prune..."
+    docker system prune -f
+fi
 
 echo "Cleanup complete."

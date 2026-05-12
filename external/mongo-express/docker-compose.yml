@@ -1,0 +1,20 @@
+name: mongo-express
+
+services:
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express
+    restart: unless-stopped
+    env_file:
+      - .env
+    networks:
+      - lab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mongo-express.rule=Host(`mongo-express.rpi.local`)"
+      - "traefik.http.routers.mongo-express.entrypoints=web"
+      - "traefik.http.services.mongo-express.loadbalancer.server.port=8081"
+
+networks:
+  lab-network:
+    external: true

@@ -48,10 +48,13 @@ fi
 
 # 3. Lab CLI & PATH Setup
 mkdir -p "$HOME/.local/bin"
-if [ ! -L "$HOME/.local/bin/lab" ]; then
-    echo "Creating symlink for lab CLI..."
-    ln -sf "/home/mlovera/lab/shared/lab" "$HOME/.local/bin/lab"
-fi
+mkdir -p "/home/mlovera/lab/shared/data"
+for tool in lab secrets; do
+    if [ ! -L "$HOME/.local/bin/$tool" ]; then
+        echo "Creating symlink for $tool CLI..."
+        ln -sf "/home/mlovera/lab/shared/$tool" "$HOME/.local/bin/$tool"
+    fi
+done
 
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
     echo "Adding ~/.local/bin to PATH..."

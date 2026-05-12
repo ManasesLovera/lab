@@ -2,10 +2,13 @@ name: traefik
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:latest
     container_name: lab-traefik
+    environment:
+      - DOCKER_API_VERSION=1.41
     command:
-      - "--api.insecure=true"
+      - "--log.level=DEBUG"
+      - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"

@@ -16,6 +16,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - lab-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.rpi.local`)"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=web"
 
 networks:
   lab-network:

@@ -11,25 +11,9 @@ services:
       - .env
     environment:
       - N8N_HOST=0.0.0.0
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
-      - N8N_SECURE_COOKIE=false
-      - NODE_ENV=production
-      - WEBHOOK_URL=${N8N_PROTOCOL:-http}://n8n.${DOMAIN_SUFFIX:-local}/
       - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
       - N8N_RUNNERS_MODE=external
       - N8N_EXTERNAL_PYTHON_RUNNER_URL=http://python-runner:5000
-      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
-      # Database Configuration
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_USER=${DB_POSTGRESDB_USER}
-      - DB_POSTGRESDB_PASSWORD=${DB_POSTGRESDB_PASSWORD}
-      # Resource Management
-      - EXECUTIONS_DATA_PRUNE=true
-      - EXECUTIONS_DATA_MAX_AGE=168
       - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
     volumes:
       - ./data:/home/node/.n8n
@@ -52,13 +36,9 @@ services:
     restart: unless-stopped
     env_file:
       - .env
-    environment:
-      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
     networks:
       - lab-network
 
 networks:
   lab-network:
     external: true
-
-

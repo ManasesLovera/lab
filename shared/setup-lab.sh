@@ -7,13 +7,24 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     exit 1
 fi
 
-echo "Checking system requirements..."
+echo "--- Lab Environment Initialization ---"
+
+# 1. System & Permissions Check
 if [[ "$OSTYPE" != "linux-gnu"* ]]; then
     echo "Error: This lab is designed for Linux (Ubuntu recommended)."
     return 1 2>/dev/null || exit 1
 fi
 
-# 1. Idempotent Docker DNS Configuration
+# Docker Group Permissions
+if ! groups $USER | grep &>/dev/null "\bdocker\b"; then
+    echo "Adding $USER to the docker group..."
+    sudo usermod -aG docker $USER
+    echo "Warning: Docker permissions updated. You may need to run 'newgrp docker' or log out/in."
+else
+    echo "Docker permissions are correctly configured."
+fi
+
+# 2. Idempotent Docker DNS Configuration
 DOCKER_CONFIG="/etc/docker/daemon.json"
 RESTART_REQUIRED=false
 
@@ -27,47 +38,46 @@ else
         sudo cp "$DOCKER_CONFIG" "$DOCKER_CONFIG.bak"
         echo '{"dns": ["8.8.8.8", "1.1.1.1"]}' | sudo tee "$DOCKER_CONFIG" > /dev/null
         RESTART_REQUIRED=true
-    else
-        echo "Docker DNS is already correctly configured."
     fi
 fi
 
 if [ "$RESTART_REQUIRED" = true ]; then
-    echo "Restarting Docker to apply changes..."
+    echo "Restarting Docker to apply DNS changes..."
     sudo systemctl restart docker
 fi
 
-# 2. Idempotent Command Injection
+# 3. Lab CLI & PATH Setup
 mkdir -p "$HOME/.local/bin"
 if [ ! -L "$HOME/.local/bin/lab" ]; then
-    echo "Creating symlink for lab CLI in ~/.local/bin..."
+    echo "Creating symlink for lab CLI..."
     ln -sf "/home/mlovera/lab/shared/lab" "$HOME/.local/bin/lab"
 fi
 
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
-    echo "Adding ~/.local/bin to PATH in .bashrc..."
+    echo "Adding ~/.local/bin to PATH..."
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
     export PATH="$HOME/.local/bin:$PATH"
 fi
 
+# 4. Alias Injection
 ALIAS_CLOUDFLARED="alias cloudflared='docker exec -it lab-cloudflared cloudflared'"
-
 if ! grep -qF "$ALIAS_CLOUDFLARED" ~/.bashrc; then
-    echo "Adding cloudflared alias to .bashrc..."
+    echo "Adding cloudflared alias..."
     echo "$ALIAS_CLOUDFLARED" >> ~/.bashrc
 fi
 
-# 3. Network Initialization
-echo "Initializing lab network..."
-NETWORK_SCRIPT="$(dirname "${BASH_SOURCE[0]}")/docker-network.sh"
-if [ -f "$NETWORK_SCRIPT" ]; then
-    bash "$NETWORK_SCRIPT"
+# 5. Network Initialization
+NETWORK_NAME=lab-network
+if docker network inspect $NETWORK_NAME >/dev/null 2>&1; then
+    echo "Network '$NETWORK_NAME' already exists."
 else
-    echo "Warning: docker-network.sh not found at $NETWORK_SCRIPT"
+    echo "Creating '$NETWORK_NAME'..."
+    docker network create $NETWORK_NAME
 fi
 
 # Refresh session
 source ~/.bashrc
 
+echo "---------------------------------------"
 echo "Setup complete. The 'lab' and 'cloudflared' aliases are active."
-echo "Note: No services were started. Use 'lab up <name>' to start a project on demand."
+echo "Note: No services were started. Use 'lab up <name>' to start a project."

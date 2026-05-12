@@ -16,11 +16,6 @@ services:
       - ./data:/data
     networks:
       - lab-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.azurite.rule=Host(`azurite.rpi.local`)"
-      - "traefik.http.routers.azurite.entrypoints=web"
-      - "traefik.http.services.azurite.loadbalancer.server.port=10000"
 
 networks:
   lab-network:

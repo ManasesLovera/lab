@@ -25,11 +25,6 @@ services:
       - ./data:/usr/share/elasticsearch/data
     networks:
       - lab-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.elasticsearch.rule=Host(`elasticsearch.rpi.local`)"
-      - "traefik.http.routers.elasticsearch.entrypoints=web"
-      - "traefik.http.services.elasticsearch.loadbalancer.server.port=9200"
 
 networks:
   lab-network:

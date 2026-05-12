@@ -14,11 +14,6 @@ services:
       - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
     networks:
       - lab-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.kibana.rule=Host(`kibana.rpi.local`)"
-      - "traefik.http.routers.kibana.entrypoints=web"
-      - "traefik.http.services.kibana.loadbalancer.server.port=5601"
 
 networks:
   lab-network:

@@ -66,7 +66,7 @@ cmd_help() {
   echo "  lab up n8n         # Starts the n8n service"
   echo "  lab up postgres    # Starts the shared database"
   echo "  lab ps -a          # Checks status of all projects"
-  echo "  lab logs traefik   # Tails the Traefik proxy logs"
+  echo "  lab logs proxy     # Tails the nginx proxy logs"
 }
 
 # Command: list
@@ -125,24 +125,21 @@ cmd_ps() {
       printf "  ${GREEN}● %-15s${NC} (Running)\n" "$name"
       found_any=true
       
-      # Inspect networking for each running container in the project
-      for id in $container_ids; do
-        # 1. Get Traefik labels for domains
-        local labels=$(docker inspect --format '{{ range $k, $v := .Config.Labels }}{{ $v }}{{ "\n" }}{{ end }}' "$id" | grep "Host(")
-        
-        # Display Domain URLs from labels
-        if [ -n "$labels" ]; then
-          # Extract hostnames from Traefik rules like Host(`n8n.rpi.local`)
-          local hosts=$(echo "$labels" | grep -oP "Host\(\`\K[^'\`]+" | tr ',' '\n')
-          for host in $hosts; do
-            if [[ "$host" == *".rpi.local"* ]]; then
-              echo -e "      ${GRAY}→ Local Net:   ${NC}http://$host"
-            elif [[ "$host" == *".mlovera.dev"* ]]; then
-              echo -e "      ${GRAY}→ Production:  ${NC}https://$host"
+      # Show HTTP routes from nginx config (only for proxy project)
+      if [ "$name" = "proxy" ] && [ -f "$LAB_DIR/core/proxy/conf.d/proxy.conf" ]; then
+        local hosts=$(grep -oP 'server_name\s+\K[^;]+' "$LAB_DIR/core/proxy/conf.d/proxy.conf" | grep -v '^_$')
+        for line in $hosts; do
+          for h in $line; do
+            h=$(echo "$h" | xargs)
+            [ -z "$h" ] && continue
+            if [[ "$h" == *".rpi.local" ]]; then
+              echo -e "      ${GRAY}→ Local Net:   ${NC}http://$h"
+            elif [[ "$h" == *".mlovera.dev" ]]; then
+              echo -e "      ${GRAY}→ Production:  ${NC}https://$h"
             fi
           done
-        fi
-      done
+        done
+      fi
     elif [ "$show_all" = true ]; then
       printf "  ${GRAY}○ %-15s${NC} (Stopped)\n" "$name"
       found_any=true

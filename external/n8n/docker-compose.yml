@@ -20,11 +20,6 @@ services:
       - ../../shared:/home/node/shared:ro
     networks:
       - lab-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.n8n.rule=Host(`n8n.rpi.local`) || Host(`n8n.mlovera.dev`)"
-      - "traefik.http.routers.n8n.entrypoints=web"
-      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
     deploy:
       resources:
         limits:

@@ -84,4 +84,3 @@ source ~/.bashrc
 echo "---------------------------------------"
 echo "Setup complete. The 'lab', 'secrets', and 'cloudflared' aliases are active."
 echo "Note: No services were started. Use 'lab up <name>' to start a project."
-ed. Use 'lab up <name>' to start a project."

@@ -113,6 +113,7 @@ cmd_ps() {
 
   local projects=($(get_projects))
   local found_any=false
+  local host_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
 
   for item in "${projects[@]}"; do
     local name="${item%%:*}"
@@ -140,6 +141,15 @@ cmd_ps() {
           done
         done
       fi
+      
+      # Show host IP:port mappings for each container in this project
+      for id in $container_ids; do
+        local ports=$(docker port "$id" 2>/dev/null | grep -oP '0\.0\.0\.0:\d+' | sort -u)
+        for p in $ports; do
+          local port=${p#*:}
+          echo -e "      ${GRAY}→ IP:Port:    ${NC}${host_ip}:${port}"
+        done
+      done
     elif [ "$show_all" = true ]; then
       printf "  ${GRAY}○ %-15s${NC} (Stopped)\n" "$name"
       found_any=true
@@ -181,10 +191,13 @@ cmd_up() {
   echo -e "${YELLOW}Starting '$proj'...${NC}"
   cd -P "$path"
   
-  # Load global environment if exists
+  # Load global and project-local environment
   local env_arg=""
   if [ -f "$LAB_DIR/.env" ]; then
     env_arg="--env-file $LAB_DIR/.env"
+  fi
+  if [ -f ".env" ]; then
+    env_arg="$env_arg --env-file .env"
   fi
 
   if [ -f "./docker-setup.sh" ]; then
@@ -222,10 +235,13 @@ cmd_down() {
   echo -e "${YELLOW}Stopping '$proj'...${NC}"
   cd -P "$path"
   
-  # Load global environment if exists
+  # Load global and project-local environment
   local env_arg=""
   if [ -f "$LAB_DIR/.env" ]; then
     env_arg="--env-file $LAB_DIR/.env"
+  fi
+  if [ -f ".env" ]; then
+    env_arg="$env_arg --env-file .env"
   fi
   
   docker compose -p "$proj" $env_arg down
@@ -256,10 +272,13 @@ cmd_logs() {
 
   cd -P "$path"
   
-  # Load global environment if exists
+  # Load global and project-local environment
   local env_arg=""
   if [ -f "$LAB_DIR/.env" ]; then
     env_arg="--env-file $LAB_DIR/.env"
+  fi
+  if [ -f ".env" ]; then
+    env_arg="$env_arg --env-file .env"
   fi
   
   docker compose -p "$proj" $env_arg logs -f

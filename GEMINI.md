@@ -1,54 +1,75 @@
 # Gemini Lab - Home Lab Architectural Context
 
-This file provides the necessary context for Gemini to understand and interact with this project effectively.
+This file provides the foundational context for Gemini to understand, maintain, and extend this project effectively.
 
 ## Project Overview
 
-**Gemini Lab** is a modular, "infrastructure-as-code" home lab environment designed for Linux (specifically Ubuntu). It uses Docker Compose to manage isolated services, Nginx for reverse proxying, and Cloudflare Tunnels for secure external access.
+**Gemini Lab** is a modular, "infrastructure-as-code" home lab environment designed for Linux (specifically Ubuntu/Raspberry Pi). It uses Docker Compose for service isolation, **Traefik v3** for dynamic reverse proxying, and **Cloudflare Tunnels** for secure remote access.
 
-### Core Architecture
-- **Isolation:** Each project (service) has its own directory and `docker-compose.yml`.
-- **Networking:** All services share a common bridge network named `lab-network`.
-- **Centralized Data:** A core PostgreSQL instance handles multiple databases for different services (n8n, etc.).
-- **Access Management:** 
-    - **Local:** Routed via `lab-traefik` using `.local` (or configured) domains defined by Docker labels.
-    - **Remote:** Cloudflare Tunnel (`lab-cloudflared`) exposes services to the internet via `*.mlovera.dev`, pointing to Traefik.
+## Core Mandates & Engineering Standards
+
+- **Conventional Commits:** ALWAYS use Conventional Commits (e.g., `feat:`, `fix:`, `chore:`, `docs:`) for all commit messages.
+- **Surgical Updates:** Use `replace` for targeted edits; avoid overwriting files unless necessary.
+- **Documentation:** Every new service MUST include a `README.md` and an `example.env`.
+- **Credential Safety:** NEVER commit `.env` files. Always check `.gitignore` and use `example.env` as a reference.
+
+## Core Architecture
+
+### 1. Networking Strategy
+- **Shared Network:** All services join the `lab-network` (external bridge).
+- **Internal Discovery:** Services communicate via container names (e.g., `http://postgres:5432`).
+- **External/Local Access:** 
+    - **HTTP:** Managed by **Traefik**. Services use Docker Labels to define domains (e.g., `*.rpi.local`, `*.mlovera.dev`).
+    - **TCP (Databases):** Mapped directly to host ports for local network access (e.g., `5432:5432`).
+- **Remote Ingress:** `lab-cloudflared` creates a secure tunnel. Wildcard `*.mlovera.dev` is routed to `lab-traefik:80`.
+
+### 2. Centralized Infrastructure
+- **Shared Databases:** Multiple services share single instances of Postgres, MongoDB, and MSSQL to reduce resource consumption.
+- **Dynamic Provisioning:** Postgres uses `init-db.sh` to create multiple databases/users based on the `POSTGRES_MULTIPLE_DATABASES` env var.
 
 ## Directory Structure
 
-- `core/`: Fundamental infrastructure services (always-on).
-    - `postgres/`: Centralized DB with dynamic init scripts.
-    - `proxy/`: Nginx reverse proxy with dynamic templates.
-    - `cloudflared/`: Secure tunnel to Cloudflare Zero Trust.
-    - `redis/`: Shared cache service.
-- `external/`: Third-party applications (n8n, Ollama).
+- `adr/`: Architecture Decision Records (e.g., Nginx to Traefik transition).
+- `core/`: Fundamental infrastructure (Always-on: Traefik, Cloudflared, Postgres, Redis, Mongo, MSSQL).
+- `docs/`: General documentation (Networking Guide, Troubleshooting).
+- `external/`: Third-party applications (n8n, Kibana, Mongo-Express).
 - `services/`: Custom applications developed within the lab.
-- `shared/`: Automation scripts and the `lab` CLI.
+- `shared/`: Utility scripts and the `lab` CLI.
+- `specs/`: Technical specifications for features and core expansions.
 
 ## Key Management Tools
 
 ### The `lab` CLI
-The `lab` command is the primary way to manage the environment.
-- `lab list`: Show all discovered projects.
-- `lab ps [-a]`: Show status of running (or all) projects.
-- `lab up <name>`: Start a project.
-- `lab down <name>`: Stop a project.
-- `lab logs <name>`: View service logs.
+Located at `shared/lab`, this dynamic tool manages project lifecycles.
+- `lab list`: Scans directories for `docker-compose.yml` and lists projects.
+- `lab ps [-a]`: Checks running status across all discovered projects.
+- `lab up <name>`: Starts a project (automatically handles `.env` if present).
+- `lab down <name>`: Stops a project.
+- `lab logs <name>`: Follows container logs.
 
-### Initialization
-Run `source ./shared/setup-lab.sh` to initialize the environment, configure Docker DNS, create the network, and inject the CLI aliases.
+### Environment Setup
+Run `source ./shared/setup-lab.sh` to:
+1. Initialize the `lab-network`.
+2. Configure Docker DNS.
+3. Inject the `lab` alias into the shell.
 
-## Development Conventions
+## Development Workflows
 
-- **Configuration:** Use `lab/.env` for global environment variables.
-- **Service Discovery:** Services should refer to each other by their container names within the `lab-network`.
-- **Database Access:** Use the `POSTGRES_MULTIPLE_DATABASES` variable in `lab/core/postgres/docker-compose.yml` to automatically create new databases/users on startup.
-- **Proxying:** Add Traefik labels to new services in their `docker-compose.yml` to define their domains.
+### Adding a New Service
+1. Create a directory in `core/`, `external/`, or `services/`.
+2. Add a `docker-compose.yml` joining `lab-network`.
+3. Add Traefik labels for HTTP routing (refer to `docs/networking.md`).
+4. Add `example.env` and `README.md`.
+5. Run `lab up <name>` to verify.
 
-## Cloudflare Tunnel (Remote Access)
-The tunnel is currently managed via **Cloudflare Zero Trust Dashboard** (Remote Management). 
-- To expose a new service, add a Public Hostname in the dashboard pointing to `http://lab-traefik:80`.
-- To expose SSH, point to `ssh://host.docker.internal:22`.
+### Modifying Shared Infrastructure
+- Refer to `specs/core-services-expansion.md` before adding new core databases or storage.
+- Ensure all TCP ports are mapped to the host if local network access is required.
 
-## Current Roadmap (Tasks)
-See `lab/tasks.md` for the latest epic and task tracking.
+## Cloudflare Remote Access
+1. Add a **Public Hostname** in the Cloudflare Zero Trust Dashboard.
+2. Point it to `http://lab-traefik:80`.
+3. Add a corresponding `Host('subdomain.mlovera.dev')` label to the service in its `docker-compose.yml`.
+
+## Task Tracking
+See `tasks.md` for the current roadmap and epic status.

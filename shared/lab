@@ -126,6 +126,7 @@ cmd_ps() {
       found_any=true
       
       # Inspect networking for each running container in the project
+      local host_ip=$(hostname -I | awk '{print $1}')
       for id in $container_ids; do
         # 1. Get Traefik labels for domains
         local labels=$(docker inspect --format '{{ range $k, $v := .Config.Labels }}{{ $v }}{{ "\n" }}{{ end }}' "$id" | grep "Host(")
@@ -133,9 +134,12 @@ cmd_ps() {
         # 2. Get Published Ports for localhost access
         local ports=$(docker inspect --format '{{ range $p, $conf := .NetworkSettings.Ports }}{{ if $conf }}{{ (index $conf 0).HostPort }}{{ "\n" }}{{ end }}{{ end }}' "$id" | sort -u)
 
-        # Display Localhost URLs
+        # Display Localhost and IP URLs
         for port in $ports; do
           echo -e "      ${GRAY}→ Localhost:   ${NC}http://localhost:$port"
+          if [ -n "$host_ip" ]; then
+            echo -e "      ${GRAY}→ Local IP:    ${NC}http://$host_ip:$port"
+          fi
         done
 
         # Display Domain URLs from labels

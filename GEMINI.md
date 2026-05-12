@@ -12,6 +12,7 @@ This file provides the foundational context for Gemini to understand, maintain, 
 - **Surgical Updates:** Use `replace` for targeted edits; avoid overwriting files unless necessary.
 - **Documentation:** Every new service MUST include a `README.md` and an `example.env`.
 - **Credential Safety:** NEVER commit `.env` files. Always check `.gitignore` and use `example.env` as a reference.
+- **Inquiry vs. Directive:** Distinguish strictly between **Inquiries** (requests for analysis, advice, or observations) and **Directives** (explicit instructions to perform a task). For Inquiries, your scope is strictly limited to research and analysis; you MUST NOT modify files until a corresponding Directive is issued. Assume all ambiguous requests are Inquiries.
 
 ## Core Architecture
 

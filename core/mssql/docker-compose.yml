@@ -2,7 +2,7 @@ name: mssql
 
 services:
   mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.microsoft.com/azure-sql-edge:latest
     container_name: mssql
     restart: unless-stopped
     ports:

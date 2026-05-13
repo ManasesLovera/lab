@@ -5,6 +5,8 @@ services:
     image: docker.elastic.co/kibana/kibana:${STACK_VERSION}
     container_name: kibana
     restart: unless-stopped
+    ports:
+      - "5601:5601"
     env_file:
       - .env
     environment:

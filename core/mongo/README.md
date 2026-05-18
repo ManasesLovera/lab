@@ -14,7 +14,7 @@ docker compose up -d
 ```
 
 ## How to Use
-- **Host**: `mongo.rpi.local` (Local Network) or `mongo` (Container Network)
+- **Host**: `mongo` (Container Network) or `192.168.1.8:27017` (Direct)
 - **Port**: `27017`
 - **Default Root User**: `admin`
 - **Default Password**: `admin_password` (defined in `.env`)
@@ -42,5 +42,6 @@ db.createUser({
 ```
 
 ## Networking
-- **Local Access**: Accessible via `mongo.rpi.local:27017`.
+- **Direct Access**: Accessible via `192.168.1.8:27017`.
+- **Web UI**: Use mongo-express at `http://mongo-express.rpi.local`.
 - **Production**: Not exposed to the internet. Access via local network or VPN.

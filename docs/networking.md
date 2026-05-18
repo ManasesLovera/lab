@@ -6,21 +6,22 @@ This guide explains how to manage access to your services within the Lab environ
 
 | Service | Local Network (*.rpi.local) | Production (*.mlovera.dev) | Port Mapping (Direct) |
 | :--- | :---: | :---: | :---: |
-| **Nginx** | `http://nginx.rpi.local` | - | 80 |
 | **n8n** | `http://n8n.rpi.local` | `https://n8n.mlovera.dev` | 5678 |
-| **Postgres** | `postgres.rpi.local` | - | 5432 |
-| **Redis** | `redis.rpi.local` | - | 6379 |
-| **MongoDB** | `mongo.rpi.local` | - | 27017 |
-| **Mongo Express** | `http://mongo-express.rpi.local` | - | 8081 |
-| **Elasticsearch**| `elasticsearch.rpi.local`| - | 9200 |
-| **Kibana** | `http://kibana.rpi.local` | - | 5601 |
-| **Azurite** | *(IP only)* | - | 10000, 10001, 10002 |
-| **MSSQL** | `mssql.rpi.local` | - | 1433 |
+| **Elasticsearch**| `http://elasticsearch.rpi.local` | — | 9200 |
+| **Kibana** | `http://kibana.rpi.local` | — | 5601 |
+| **Mongo Express** | `http://mongo-express.rpi.local` | — | — |
+| **Postgres** | *(IP only)* | — | 5432 |
+| **MongoDB** | *(IP only)* | — | 27017 |
+| **Redis** | *(IP only)* | — | 6379 |
+| **MSSQL** | *(IP only)* | — | 1433 |
+| **Azurite** | *(IP only)* | — | 10000, 10001, 10002 |
 
 ---
 
 ## Overview
-The lab uses **Nginx** as a static reverse proxy. Routing is configured via `server` blocks in `core/proxy/conf.d/proxy.conf`. Each service has its own `server` block with hardcoded domain names.
+The lab uses **Nginx** as a static reverse proxy. Routing is configured via `server` blocks in `core/proxy/conf.d/proxy.conf`. Each HTTP service has its own `server` block with hardcoded domain names.
+
+Non-HTTP services (Postgres, Mongo, Redis, MSSQL, Azurite) are accessed directly via IP:Port — they are not proxied through Nginx.
 
 ---
 
@@ -108,7 +109,6 @@ services:
 ```
 
 ## 4. Shared Infrastructure (TCP/Database)
-For non-HTTP services (Postgres, Redis, Mongo), nginx does not route traffic. The standard practice is:
+For non-HTTP services (Postgres, Redis, Mongo, MSSQL), nginx does not route traffic. The standard practice is:
 1. **Direct Port Mapping**: Map the port in `docker-compose.yml` (e.g., `5432:5432`).
-2. **DNS Resolution**: Your router/DNS should point `postgres.rpi.local` to the Pi's static IP.
-3. Applications connect directly to `postgres.rpi.local:5432`.
+2. Applications connect directly to `192.168.1.8:<port>` or via container name from within `lab-network`.

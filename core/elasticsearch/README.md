@@ -6,7 +6,7 @@ lab up elasticsearch
 ```
 
 ## How to Use
-- **Host**: `elasticsearch.rpi.local` (HTTP) or `elasticsearch:9200` (Internal)
+- **Host**: `elasticsearch.rpi.local` (HTTP via proxy) or `elasticsearch:9200` (Internal) or `192.168.1.8:9200` (Direct)
 - **Default User**: `elastic`
 - **Default Password**: `admin_password` (defined in `.env`)
 
@@ -28,6 +28,6 @@ curl -u elastic:admin_password -X POST "http://localhost:9200/_security/user/new
 ```
 
 ## Networking
-- **Local Network**: Accessible via `http://elasticsearch.rpi.local` through Traefik.
-- **Production**: To expose remotely, update `core/elasticsearch/docker-compose.yml` labels to include `Host('elasticsearch.mlovera.dev')`.
-- **Change Prefix**: Change the Host rule in `docker-compose.yml` from `elasticsearch.rpi.local` to `elasticsearch.rpi5.local`.
+- **Local Network**: Accessible via `http://elasticsearch.rpi.local` through the lab-proxy (Nginx).
+- **Direct Access**: Port `9200` is exposed on the host.
+- **Production**: To expose remotely, add `elasticsearch.mlovera.dev` to the `server_name` directive in `core/proxy/conf.d/proxy.conf` and reload: `docker exec lab-proxy nginx -s reload`.

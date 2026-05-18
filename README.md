@@ -11,15 +11,21 @@ The lab is organized into four main directories based on the intent and lifecycl
 Baseline services that support the entire lab. These are generally "always-on."
 
 * **postgres**: Centralized PostgreSQL 17 instance with dynamic multi-database/user initialization.
-* **proxy**: Nginx-based reverse proxy managing .local domain routing.
-* **redis**: (Optional) Centralized Redis instance for shared caching.
+* **proxy**: Nginx-based reverse proxy managing `.rpi.local` and `.mlovera.dev` domain routing.
+* **redis**: Centralized Redis instance for shared caching.
+* **elasticsearch**: Search and analytics engine, powers Kibana.
+* **mongo**: MongoDB document database.
+* **mssql**: Microsoft SQL Server 2022.
+* **azurite**: Azure Storage API emulator (blob, queue, table).
+* **cloudflared**: Cloudflare Tunnel for secure remote access.
 
 ### 2. external/ - Third-Party Applications
 
 Pre-built tools and platforms managed via Docker Compose.
 
 * **n8n**: Workflow automation (backed by core Postgres).
-* **ollama**: Local LLM runner.
+* **kibana**: Elasticsearch visualization and management UI.
+* **mongo-express**: Web-based MongoDB admin interface.
 
 ### 3. services/ - Internal/Custom Development
 
@@ -33,7 +39,7 @@ Core automation logic, network configuration, and the lab CLI.
 
 ## Management CLI (lab)
 
-The lab includes a custom Bash CLI for streamlined management. Once setup, it is available globally via the lab command.
+The lab includes a custom Bash CLI for streamlined management. Once setup, it is available globally via the `lab` command.
 
 ### Usage
 
@@ -53,7 +59,7 @@ The lab includes a custom Bash CLI for streamlined management. Once setup, it is
 
 * **OS**: Ubuntu 22.04 LTS or newer.
 * **Docker**: Docker Engine and Docker Compose V2 installed.
-* **Permissions**: Current user must be in the docker group.
+* **Permissions**: Current user must be in the `docker` group.
 
 ### 2. Initialization
 
@@ -65,13 +71,58 @@ source ./shared/setup-lab.sh
 
 ### 3. Accessing the Lab
 
-Once initialized, the core infrastructure (Postgres, Proxy) will start automatically. You can access your services at:
+Once initialized, the core infrastructure (Postgres, Proxy, Redis, etc.) will start automatically. Access your services at:
 
-* **n8n**: [http://n8n.local](http://n8n.local)
-*(Note: Ensure you add these to your /etc/hosts file or use the helper command provided during setup.)*
+| Service | Local URL | Direct IP:Port |
+|---|---|---|
+| n8n | http://n8n.rpi.local | `192.168.1.8:5678` |
+| elasticsearch | http://elasticsearch.rpi.local | `192.168.1.8:9200` |
+| kibana | http://kibana.rpi.local | `192.168.1.8:5601` |
+| mongo-express | http://mongo-express.rpi.local | — |
+| postgres | — | `192.168.1.8:5432` |
+| mongo | — | `192.168.1.8:27017` |
+| redis | — | `192.168.1.8:6379` |
+| mssql | — | `192.168.1.8:1433` |
+| azurite | — | `192.168.1.8:10000-10002` |
+
+*(Note: Add `192.168.1.8` entries to your `/etc/hosts` or use the helper command provided during setup for `.rpi.local` resolution.)*
+
+### 4. Production Access
+
+Services with a `*.mlovera.dev` production domain are exposed via Cloudflare Tunnel. See `core/cloudflared/README.md` for details.
+
+---
+
+## Default Credentials
+
+| Service | User | Password | Auth Method |
+|---|---|---|---|
+| **Postgres** | `admin` | `P@ssw0rd!Adm1n#2024` | Password (`.env`) |
+| **MongoDB** | `admin` | `admin_password` | Password (`.env`) |
+| **MSSQL** | `sa` | `StrongPassword123!` | SQL Server Auth (`.env`) |
+| **Elasticsearch** | `elastic` | `admin_password` | Basic Auth (`.env`) |
+| **Kibana** | `elastic` | `admin_password` | Login form (delegates to ES) |
+| **Azurite** | `devstoreaccount1` | `Eby8vdM02x...` (well-known key) | Storage account key |
+| **Redis** | *(none — no auth)* | — | Network-only |
+| **n8n** | *(self-registered)* | *(first-run setup)* | Registration form |
+| **Mongo Express** | `admin` | `pass` | Basic Auth (UI) |
+
+See `docs/credentials.md` for detailed user management, permission grants, and how to add new users to each database.
 
 ---
 
 ## Networking
 
-All containers communicate over a unified bridge network named lab-network. This enables service discovery via container names (e.g., n8n connecting to postgres:5432).
+All containers communicate over a unified bridge network named `lab-network`. This enables service discovery via container names (e.g., n8n connecting to `postgres:5432`).
+
+### HTTP Routing
+
+HTTP traffic is handled by Nginx (`lab-proxy`) via `core/proxy/conf.d/proxy.conf`. To expose a new HTTP service:
+1. Edit `core/proxy/conf.d/proxy.conf` to add a `server_name` and `proxy_pass` block.
+2. Reload the proxy: `docker exec lab-proxy nginx -s reload`.
+
+### Remote Access
+
+Production traffic (`*.mlovera.dev`) is routed through Cloudflare Tunnel (`cloudflared`) to `lab-proxy:80`, which matches the production `server_name` entries in the Nginx config.
+
+See `docs/networking.md` for full routing and access control details.

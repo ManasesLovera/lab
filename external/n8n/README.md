@@ -16,7 +16,7 @@ docker compose up -d
 ```
 
 ## Initialization & Default User
-1. Access `http://n8n.rpi.local` (or `http://localhost:5678`).
+1. Access `http://n8n.rpi.local` (or `http://192.168.1.8:5678`).
 2. On first run, n8n will prompt you to create an owner account.
 3. To change credentials later, use the n8n UI (Settings > Users).
 
@@ -35,18 +35,14 @@ This setup includes a dedicated `python-runner` service.
 ## Networking & Access Control
 
 ### 1. Local Network (*.rpi.local)
-Access n8n via `http://n8n.rpi.local`.
-- **To change prefix** (e.g., to `*.rpi5.local`): Update the label in `docker-compose.yml`:
-  ```yaml
-  - "traefik.http.routers.n8n.rule=Host(`n8n.rpi5.local`)"
-  ```
+Access n8n via `http://n8n.rpi.local`. Routing is handled by the lab-proxy (Nginx) via `core/proxy/conf.d/proxy.conf`.
 
 ### 2. Production Access (*.mlovera.dev)
-n8n is exposed to the internet via the Cloudflare Tunnel at `https://n8n.mlovera.dev`.
-- **Security**: Traefik handles the routing. Ensure you have set a strong password in the n8n UI since it is public.
+n8n is exposed to the internet via the Cloudflare Tunnel at `https://n8n.mlovera.dev`. Traffic flows: Cloudflare Tunnel → `lab-proxy:80` → Nginx matches `n8n.mlovera.dev` server_name → `n8n_local:5678`.
+- **Security**: Ensure you have set a strong password in the n8n UI since it is public.
 
 ### 3. Localhost Only
-Remove the labels and ports from `docker-compose.yml` to prevent any external access.
+Remove the `ports` mapping from `docker-compose.yml` to prevent any external access.
 
 ## Accessing Files
 Your shared lab scripts and data are available inside the n8n container at `/home/node/shared`. This is a read-only mount of the project's `shared/` directory.

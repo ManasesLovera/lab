@@ -23,5 +23,5 @@ It connects to the `mongo` core service via the `lab-network`.
 - **Credentials**: Uses the root admin credentials defined in `core/mongo/.env`.
 
 ## Networking
-- **Local Network Only**: Accessible via `http://mongo-express.rpi.local`.
-- **Production**: By default, this is **not** exposed to the internet. To expose it, you would need to add a `Host('mongo-express.mlovera.dev')` label and configure Cloudflare.
+- **Local Network Only**: Accessible via `http://mongo-express.rpi.local` through the lab-proxy (Nginx).
+- **Production**: By default, this is **not** exposed to the internet. To expose it, add `mongo-express.mlovera.dev` to the `server_name` directive in `core/proxy/conf.d/proxy.conf` and reload: `docker exec lab-proxy nginx -s reload`.

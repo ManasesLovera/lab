@@ -10,7 +10,7 @@ You are an expert at extending the Gemini Lab environment with new services.
 ## Service Categories
 When adding a new service, first determine its correct category:
 - **`core/`**: Fundamental infrastructure services (always-on, e.g., databases, proxies).
-- **`external/`**: Third-party applications (e.g., n8n, Kibana, Mongo Express).
+- **`external/`**: Third-party applications (e.g., n8n).
 - **`services/`**: Custom applications developed specifically for this lab.
 
 ## Technical Requirements

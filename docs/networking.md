@@ -8,8 +8,6 @@ This guide explains how to manage access to your services within the Lab environ
 | :--- | :---: | :---: | :---: |
 | **n8n** | `http://n8n.rpi.local` | `https://n8n.mlovera.dev` | 5678 |
 | **Elasticsearch**| `http://elasticsearch.rpi.local` | — | 9200 |
-| **Kibana** | `http://kibana.rpi.local` | — | 5601 |
-| **Mongo Express** | `http://mongo-express.rpi.local` | — | — |
 | **Postgres** | *(IP only)* | — | 5432 |
 | **MongoDB** | *(IP only)* | — | 27017 |
 | **Redis** | *(IP only)* | — | 6379 |

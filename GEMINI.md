@@ -33,7 +33,7 @@ This file provides the foundational context for Gemini to understand, maintain, 
 - `adr/`: Architecture Decision Records (e.g., Nginx to Traefik transition).
 - `core/`: Fundamental infrastructure (Always-on: Traefik, Cloudflared, Postgres, Redis, Mongo, MSSQL).
 - `docs/`: General documentation (Networking Guide, Troubleshooting).
-- `external/`: Third-party applications (n8n, Kibana, Mongo-Express).
+- `external/`: Third-party applications (n8n).
 - `services/`: Custom applications developed within the lab.
 - `shared/`: Utility scripts and the `lab` CLI.
 - `specs/`: Technical specifications for features and core expansions.

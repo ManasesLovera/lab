@@ -16,7 +16,7 @@ lab up elasticsearch
 Passwords for built-in users are set via the `.env` file (`ELASTIC_PASSWORD`).
 
 ### User Management
-Elasticsearch uses its Security API. Use `curl` or Kibana (if installed):
+Elasticsearch uses its Security API. Use `curl`:
 ```bash
 curl -u elastic:admin_password -X POST "http://localhost:9200/_security/user/new_user" -H 'Content-Type: application/json' -d'
 {

@@ -43,5 +43,4 @@ db.createUser({
 
 ## Networking
 - **Direct Access**: Accessible via `192.168.1.8:27017`.
-- **Web UI**: Use mongo-express at `http://mongo-express.rpi.local`.
 - **Production**: Not exposed to the internet. Access via local network or VPN.

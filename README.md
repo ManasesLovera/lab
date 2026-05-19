@@ -13,7 +13,7 @@ Baseline services that support the entire lab. These are generally "always-on."
 * **postgres**: Centralized PostgreSQL 17 instance with dynamic multi-database/user initialization.
 * **proxy**: Nginx-based reverse proxy managing `.rpi.local` and `.mlovera.dev` domain routing.
 * **redis**: Centralized Redis instance for shared caching.
-* **elasticsearch**: Search and analytics engine, powers Kibana.
+* **elasticsearch**: Search and analytics engine.
 * **mongo**: MongoDB document database.
 * **mssql**: Microsoft SQL Server 2022.
 * **azurite**: Azure Storage API emulator (blob, queue, table).
@@ -24,8 +24,6 @@ Baseline services that support the entire lab. These are generally "always-on."
 Pre-built tools and platforms managed via Docker Compose.
 
 * **n8n**: Workflow automation (backed by core Postgres).
-* **kibana**: Elasticsearch visualization and management UI.
-* **mongo-express**: Web-based MongoDB admin interface.
 
 ### 3. services/ - Internal/Custom Development
 
@@ -77,8 +75,6 @@ Once initialized, the core infrastructure (Postgres, Proxy, Redis, etc.) will st
 |---|---|---|
 | n8n | http://n8n.rpi.local | `192.168.1.8:5678` |
 | elasticsearch | http://elasticsearch.rpi.local | `192.168.1.8:9200` |
-| kibana | http://kibana.rpi.local | `192.168.1.8:5601` |
-| mongo-express | http://mongo-express.rpi.local | — |
 | postgres | — | `192.168.1.8:5432` |
 | mongo | — | `192.168.1.8:27017` |
 | redis | — | `192.168.1.8:6379` |
@@ -101,11 +97,9 @@ Services with a `*.mlovera.dev` production domain are exposed via Cloudflare Tun
 | **MongoDB** | `admin` | `admin_password` | Password (`.env`) |
 | **MSSQL** | `sa` | `StrongPassword123!` | SQL Server Auth (`.env`) |
 | **Elasticsearch** | `elastic` | `admin_password` | Basic Auth (`.env`) |
-| **Kibana** | `elastic` | `admin_password` | Login form (delegates to ES) |
 | **Azurite** | `devstoreaccount1` | `Eby8vdM02x...` (well-known key) | Storage account key |
 | **Redis** | *(none — no auth)* | — | Network-only |
 | **n8n** | *(self-registered)* | *(first-run setup)* | Registration form |
-| **Mongo Express** | `admin` | `pass` | Basic Auth (UI) |
 
 See `docs/credentials.md` for detailed user management, permission grants, and how to add new users to each database.
 

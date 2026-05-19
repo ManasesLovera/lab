@@ -282,9 +282,6 @@ curl -u elastic:admin_password http://localhost:9200
 
 # From another container
 curl -u elastic:admin_password http://elasticsearch:9200
-
-# Via Kibana UI
-# Open http://kibana.rpi.local and log in with elastic/admin_password
 ```
 
 ### Add a New User
@@ -312,14 +309,7 @@ curl -u elastic:admin_password -X POST "http://localhost:9200/_security/role/my_
       "field_security": { "grant": ["*"], "except": ["ssn"] }
     }
   ],
-  "cluster": ["monitor"],
-  "applications": [
-    {
-      "application": "kibana-.kibana",
-      "privileges": ["read"],
-      "resources": ["*"]
-    }
-  ]
+  "cluster": ["monitor"]
 }
 '
 ```
@@ -329,8 +319,6 @@ curl -u elastic:admin_password -X POST "http://localhost:9200/_security/role/my_
 | Role | Description |
 |---|---|
 | `superuser` | Full access to all indices and cluster operations |
-| `kibana_system` | Internal Kibana system user (background communication) |
-| `kibana_admin` | Administer Kibana dashboards and settings |
 | `editor` | Read/write on all indices |
 | `viewer` | Read-only on all indices |
 
@@ -348,20 +336,6 @@ curl -u elastic:admin_password -X PUT "http://localhost:9200/_security/user/jane
 
 # Delete user
 curl -u elastic:admin_password -X DELETE "http://localhost:9200/_security/user/jane"
-```
-
-### Kibana-specific Setup
-
-The `kibana_system` user is used for background communication between Kibana and Elasticsearch. If the password changes in ES, update `external/kibana/.env`:
-
-```bash
-# external/kibana/.env
-ELASTICSEARCH_PASSWORD=<new_password>
-```
-
-Then restart Kibana:
-```bash
-lab down kibana && lab up kibana
 ```
 
 ---
@@ -501,6 +475,5 @@ client.create_container("mycontainer")
 | Elasticsearch | `elasticsearch` | 9200 | Yes (basic auth) |
 | Redis | `redis` | 6379 | No (default) |
 | Azurite | `azurite` | 10000-10002 | Yes (account key) |
-| Kibana | `kibana` | 5601 | Yes (via ES) |
-| Mongo Express | `mongo-express` | 8081 | Yes (basic auth) |
 | n8n | `n8n_local` | 5678 | Self-registered |
+

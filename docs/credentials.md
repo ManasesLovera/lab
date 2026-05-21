@@ -11,7 +11,6 @@ This document covers default credentials for all lab services and how to add new
 - [MSSQL (SQL Server)](#mssql-sql-server)
 - [Elasticsearch](#elasticsearch)
 - [Redis](#redis)
-- [Azurite (Azure Storage Emulator)](#azurite-azure-storage-emulator)
 
 ---
 
@@ -403,68 +402,6 @@ ACL DELUSER app_user
 
 ---
 
-## Azurite (Azure Storage Emulator)
-
-### Default Credentials
-
-| Field | Value |
-|---|---|
-| Host (internal) | `azurite:10000` (blob), `azurite:10001` (queue), `azurite:10002` (table) |
-| Host (external) | `192.168.1.8:10000-10002` |
-| Account name | `devstoreaccount1` |
-| Account key | `Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==` |
-
-### Connecting
-
-```bash
-# Azure CLI
-az storage blob list --account-name devstoreaccount1 \
-  --account-key "Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==" \
-  --blob-endpoint http://192.168.1.8:10000/devstoreaccount1 \
-  --container-name mycontainer
-
-# Connection strings
-# Blob:
-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==;BlobEndpoint=http://192.168.1.8:10000/devstoreaccount1;
-
-# Queue:
-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==;QueueEndpoint=http://192.168.1.8:10001/devstoreaccount1;
-
-# Table:
-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==;TableEndpoint=http://192.168.1.8:10002/devstoreaccount1;
-
-# All-in-one:
-DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqRztJFAkZuzDjt38ADxW7Ef9GEbeG98tkr8WvH06lX6GSEuG8DXvdVH2CTT9S50u30kvw==;BlobEndpoint=http://192.168.1.8:10000/devstoreaccount1;QueueEndpoint=http://192.168.1.8:10001/devstoreaccount1;TableEndpoint=http://192.168.1.8:10002/devstoreaccount1;
-```
-
-### Add Custom Storage Accounts
-
-Define additional accounts in `core/azurite/.env`:
-
-```env
-AZURITE_ACCOUNDS=account1:key1
-```
-
-The format is `accountName:base64key`. Azurite docs: https://github.com/Azure/Azurite
-
-### SDK Usage Examples
-
-```python
-# Python (azure-storage-blob)
-from azure.storage.blob import BlobServiceClient
-
-conn_str = "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02x...;BlobEndpoint=http://192.168.1.8:10000/devstoreaccount1;"
-client = BlobServiceClient.from_connection_string(conn_str)
-client.create_container("mycontainer")
-```
-
-```bash
-# Using Azure Storage Explorer
-# Add connection: Storage account → Connection string → paste the all-in-one string above
-```
-
----
-
 ## Quick Reference
 
 | Service | Container Name | Port | Auth Required |
@@ -474,6 +411,5 @@ client.create_container("mycontainer")
 | MSSQL | `mssql` | 1433 | Yes (user/pass) |
 | Elasticsearch | `elasticsearch` | 9200 | Yes (basic auth) |
 | Redis | `redis` | 6379 | No (default) |
-| Azurite | `azurite` | 10000-10002 | Yes (account key) |
 | n8n | `n8n_local` | 5678 | Self-registered |
 

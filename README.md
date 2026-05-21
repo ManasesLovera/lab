@@ -16,7 +16,6 @@ Baseline services that support the entire lab. These are generally "always-on."
 * **elasticsearch**: Search and analytics engine.
 * **mongo**: MongoDB document database.
 * **mssql**: Microsoft SQL Server 2022.
-* **azurite**: Azure Storage API emulator (blob, queue, table).
 * **cloudflared**: Cloudflare Tunnel for secure remote access.
 
 ### 2. external/ - Third-Party Applications
@@ -79,7 +78,6 @@ Once initialized, the core infrastructure (Postgres, Proxy, Redis, etc.) will st
 | mongo | — | `192.168.1.8:27017` |
 | redis | — | `192.168.1.8:6379` |
 | mssql | — | `192.168.1.8:1433` |
-| azurite | — | `192.168.1.8:10000-10002` |
 
 *(Note: Add `192.168.1.8` entries to your `/etc/hosts` or use the helper command provided during setup for `.rpi.local` resolution.)*
 
@@ -97,7 +95,6 @@ Services with a `*.mlovera.dev` production domain are exposed via Cloudflare Tun
 | **MongoDB** | `admin` | `admin_password` | Password (`.env`) |
 | **MSSQL** | `sa` | `StrongPassword123!` | SQL Server Auth (`.env`) |
 | **Elasticsearch** | `elastic` | `admin_password` | Basic Auth (`.env`) |
-| **Azurite** | `devstoreaccount1` | `Eby8vdM02x...` (well-known key) | Storage account key |
 | **Redis** | *(none — no auth)* | — | Network-only |
 | **n8n** | *(self-registered)* | *(first-run setup)* | Registration form |
 

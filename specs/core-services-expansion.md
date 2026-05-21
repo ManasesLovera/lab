@@ -5,12 +5,6 @@ To provide a robust, unified set of development databases and storage emulators 
 
 ## 2. Included Services
 
-### 2.1 Azure Storage (Azurite)
-- **Purpose**: Emulate Azure Blob, Queue, and Table storage for local cloud-native development.
-- **Implementation**: `mcr.microsoft.com/azure-storage/azurite`.
-- **Ports**: 10000 (Blob), 10001 (Queue), 10002 (Table).
-- **Access**: `azurite.rpi.local`.
-
 ### 2.2 Microsoft SQL Server (MSSQL)
 - **Purpose**: Provide a relational database for .NET and enterprise-style applications.
 - **Implementation**: `mcr.microsoft.com/mssql/server:2022-latest`.

@@ -2,53 +2,86 @@
 
 This is the centralized PostgreSQL instance for the lab.
 
-## How to Run
+## Quick Start
 
 ### Using Lab CLI (Recommended)
 ```bash
 lab up postgres
 ```
 
-### Using Docker Compose
+### Credentials & Connection
+- **Host**: `192.168.1.8` (or your Pi's IP) / `postgres` (Container Network)
+- **Port**: `5432`
+- **Admin User**: `admin`
+- **Password**: Defined in `.env` (Use `secrets get postgres_admin_password` to check)
+
+---
+
+## User & Database Management
+
+### 1. Automated Provisioning (Startup)
+The lab uses a custom initialization script (`init-db.sh`). To add a service database on startup:
+1. Update `POSTGRES_MULTIPLE_DATABASES` in `core/postgres/.env` (comma-separated):
+   ```env
+   POSTGRES_MULTIPLE_DATABASES=n8n,my_new_app
+   ```
+2. (Optional) Set a specific password: `my_new_app_PASSWORD=some_secret`.
+3. Run `lab up postgres`.
+
+### 2. Management via Lab Tools (Runtime)
+You can create users and databases without restarting the service using the `secrets` tool:
+
 ```bash
-cd core/postgres
-docker compose up -d
+# Usage: secrets db create-user postgres <dbname> <username> <password>
+secrets db create-user postgres my_app my_user my_secure_pass
+```
+This command automatically:
+- Creates the user and database.
+- Grants all privileges to the user.
+- Configures the public schema permissions.
+- Logs the action in the local audit history (`secrets history`).
+
+### 3. Credential Synchronization
+If you change passwords in `.env` after the database is already initialized, the internal DB password will NOT update automatically. You must sync them manually:
+
+```bash
+# Update admin password inside the DB
+docker exec -it postgres psql -U admin -c "ALTER USER admin WITH PASSWORD 'new_password';"
+
+# Then update the secrets manager
+shared/import-postgres-creds.sh
 ```
 
-## How to Use
-- **Host**: `postgres.rpi.local` (Local Network) or `postgres` (Container Network)
-- **Port**: `5432`
-- **Default Admin User**: `admin`
-- **Default Password**: `admin_password` (defined in `.env`)
+---
 
-## Configuration & Customization
+## Operations & Troubleshooting
 
-### Change Local Domain Prefix
-Update your DNS server or local `/etc/hosts` to point your desired prefix (e.g., `postgres.rpi5.local`) to the Raspberry Pi's IP.
+### Check Stored Credentials
+The lab maintains a local secrets manager for easy retrieval:
+```bash
+secrets list                        # Show all discovered .env credentials
+secrets get postgres_admin_password # Get specific admin password
+secrets get postgres_n8n_password   # Get specific app password
+secrets history                     # See history of users created via 'secrets db'
+```
 
-### Change Admin Password
-1. Update `POSTGRES_PASSWORD` in `core/postgres/.env`.
-2. Restart the container: `lab up postgres`.
-
-### Create New Databases & Users
-This instance uses a custom initialization script. To automatically create a new database and its owner on startup:
-1. Open `core/postgres/docker-compose.yml`.
-2. Append the database name to `POSTGRES_MULTIPLE_DATABASES` (comma-separated):
-   ```yaml
-   - POSTGRES_MULTIPLE_DATABASES=n8n,my_new_app
-   ```
-3. Restart: `lab up postgres`.
-4. The script will create a user `my_new_app` with the password from `POSTGRES_PASSWORD` and grant all privileges on the `my_new_app` database.
-
-### Manual User/Permission Management
-Connect via `psql`:
+### Manual Console Access
 ```bash
 docker exec -it postgres psql -U admin
 ```
-- **Create User**: `CREATE USER new_user WITH PASSWORD 'secure_password';`
-- **Create DB**: `CREATE DATABASE new_db OWNER new_user;`
-- **Grant Permissions**: `GRANT ALL PRIVILEGES ON DATABASE new_db TO new_user;`
 
-## Networking
-- **Local Access**: Accessible via `postgres.rpi.local:5432` because port `5432` is mapped to the host.
-- **Production**: Not exposed via Traefik by default for security. Use a VPN or SSH tunnel to access remotely.
+### Common Commands (Inside psql)
+- **List Databases**: `\l`
+- **List Users**: `\du`
+- **Switch Database**: `\c <dbname>`
+- **Reset Password**: `ALTER USER <username> WITH PASSWORD '<password>';`
+
+### Maintenance Scripts
+- `shared/import-postgres-creds.sh`: Scans the container and imports active database credentials into the `secrets` manager. Use this if you lose track of passwords or after manual changes.
+
+---
+
+## Networking & Security
+- **Local Access**: Accessible via port `5432` on the host.
+- **Authentication**: Uses `scram-sha-256` for host connections.
+- **Production**: Not exposed via Traefik/Cloudflare by default.

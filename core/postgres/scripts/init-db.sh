@@ -27,13 +27,13 @@ function create_user_and_database() {
 	echo "$database:$database:$password" >> "$CREDENTIALS_FILE"
 }
 
-# Log superuser credentials
+# Log superuser credentials for secrets manager
 echo "admin:$POSTGRES_USER:$POSTGRES_PASSWORD" > "$CREDENTIALS_FILE"
 
 if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
 	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
 	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
-		create_user_and_database $db
+		create_user_and_database "$db"
 	done
 	echo "Multiple databases created"
 fi

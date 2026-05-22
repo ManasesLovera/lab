@@ -52,6 +52,27 @@ docker exec -it postgres psql -U admin -c "ALTER USER admin WITH PASSWORD 'new_p
 shared/import-postgres-creds.sh
 ```
 
+### 4. Table Ownership & Permissions
+If you encounter errors like `must be owner of table`, it means the user connecting to the database doesn't own the tables it's trying to manage. You can transfer ownership of all objects in a database to a specific user with this command:
+
+```bash
+# Transfer all public schema objects (tables, sequences, views) to a user
+docker exec -it postgres psql -U admin -d <dbname> -c "
+DO \$\$ 
+DECLARE r RECORD;
+BEGIN 
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP 
+        EXECUTE 'ALTER TABLE ' || quote_ident(r.tablename) || ' OWNER TO <username>'; 
+    END LOOP;
+    FOR r IN (SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public') LOOP 
+        EXECUTE 'ALTER SEQUENCE ' || quote_ident(r.sequence_name) || ' OWNER TO <username>'; 
+    END LOOP;
+    FOR r IN (SELECT table_name FROM information_schema.views WHERE table_schema = 'public') LOOP 
+        EXECUTE 'ALTER VIEW ' || quote_ident(r.table_name) || ' OWNER TO <username>'; 
+    END LOOP;
+END \$\$;"
+```
+
 ---
 
 ## Operations & Troubleshooting

@@ -25,13 +25,13 @@ This file provides the foundational context for Gemini to understand, maintain, 
 - **Remote Ingress:** `lab-cloudflared` creates a secure tunnel. Wildcard `*.mlovera.dev` is routed to `lab-traefik:80`.
 
 ### 2. Centralized Infrastructure
-- **Shared Databases:** Multiple services share single instances of Postgres, MongoDB, and MSSQL to reduce resource consumption.
+- **Shared Databases:** Multiple services share single instances of Postgres and MongoDB to reduce resource consumption.
 - **Dynamic Provisioning:** Postgres uses `init-db.sh` to create multiple databases/users based on the `POSTGRES_MULTIPLE_DATABASES` env var.
 
 ## Directory Structure
 
 - `adr/`: Architecture Decision Records (e.g., Nginx to Traefik transition).
-- `core/`: Fundamental infrastructure (Always-on: Traefik, Cloudflared, Postgres, Redis, Mongo, MSSQL).
+- `core/`: Fundamental infrastructure (Always-on: Traefik, Cloudflared, Postgres, Redis, Mongo).
 - `docs/`: General documentation (Networking Guide, Troubleshooting).
 - `external/`: Third-party applications (n8n).
 - `services/`: Custom applications developed within the lab.

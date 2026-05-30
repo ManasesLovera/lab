@@ -33,4 +33,4 @@ Nginx operates as a lightweight static reverse proxy with per-service configurat
 - `core/proxy` is reinstated as the mandatory edge router.
 - `core/cloudflared` ingress is updated to point to `lab-proxy:80`.
 - All Traefik labels are stripped from service `docker-compose.yml` files.
-- Services without HTTP needs (postgres, redis, mongo, mssql) remain IP/port-only.
+- Services without HTTP needs (postgres, redis, mongo) remain IP/port-only.

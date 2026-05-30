@@ -15,7 +15,6 @@ Baseline services that support the entire lab. These are generally "always-on."
 * **redis**: Centralized Redis instance for shared caching.
 * **elasticsearch**: Search and analytics engine.
 * **mongo**: MongoDB document database.
-* **mssql**: Microsoft SQL Server 2022.
 * **cloudflared**: Cloudflare Tunnel for secure remote access.
 
 ### 2. external/ - Third-Party Applications
@@ -77,7 +76,6 @@ Once initialized, the core infrastructure (Postgres, Proxy, Redis, etc.) will st
 | postgres | — | `192.168.1.8:5432` |
 | mongo | — | `192.168.1.8:27017` |
 | redis | — | `192.168.1.8:6379` |
-| mssql | — | `192.168.1.8:1433` |
 
 *(Note: Add `192.168.1.8` entries to your `/etc/hosts` or use the helper command provided during setup for `.rpi.local` resolution.)*
 
@@ -93,7 +91,6 @@ Services with a `*.mlovera.dev` production domain are exposed via Cloudflare Tun
 |---|---|---|---|
 | **Postgres** | `admin` | `P@ssw0rd!Adm1n#2024` | Password (`.env`) |
 | **MongoDB** | `admin` | `admin_password` | Password (`.env`) |
-| **MSSQL** | `sa` | `StrongPassword123!` | SQL Server Auth (`.env`) |
 | **Elasticsearch** | `elastic` | `admin_password` | Basic Auth (`.env`) |
 | **Redis** | *(none — no auth)* | — | Network-only |
 | **n8n** | *(self-registered)* | *(first-run setup)* | Registration form |

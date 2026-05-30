@@ -11,14 +11,13 @@ This guide explains how to manage access to your services within the Lab environ
 | **Postgres** | *(IP only)* | — | 5432 |
 | **MongoDB** | *(IP only)* | — | 27017 |
 | **Redis** | *(IP only)* | — | 6379 |
-| **MSSQL** | *(IP only)* | — | 1433 |
 
 ---
 
 ## Overview
 The lab uses **Nginx** as a static reverse proxy. Routing is configured via `server` blocks in `core/proxy/conf.d/proxy.conf`. Each HTTP service has its own `server` block with hardcoded domain names.
 
-Non-HTTP services (Postgres, Mongo, Redis, MSSQL) are accessed directly via IP:Port — they are not proxied through Nginx.
+Non-HTTP services (Postgres, Mongo, Redis) are accessed directly via IP:Port — they are not proxied through Nginx.
 
 ---
 
@@ -106,7 +105,7 @@ services:
 ```
 
 ## 4. Shared Infrastructure (TCP/Database)
-For non-HTTP services (Postgres, Redis, Mongo, MSSQL), nginx does not route traffic. The standard practice is:
+For non-HTTP services (Postgres, Redis, Mongo), nginx does not route traffic. The standard practice is:
 
 1. **Direct Port Mapping**: Map the port in `docker-compose.yml` (e.g., `5432:5432`).
 2. Applications connect directly to `192.168.1.8:<port>` or via container name from within `lab-network`.

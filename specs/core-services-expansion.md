@@ -5,18 +5,12 @@ To provide a robust, unified set of development databases and storage emulators 
 
 ## 2. Included Services
 
-### 2.2 Microsoft SQL Server (MSSQL)
-- **Purpose**: Provide a relational database for .NET and enterprise-style applications.
-- **Implementation**: `mcr.microsoft.com/mssql/server:2022-latest`.
-- **Security**: Required `ACCEPT_EULA` and strong password enforcement via `.env`.
-- **Access**: Direct TCP mapping on port 1433.
-
-### 2.3 MongoDB
+### 2.2 MongoDB
 - **Purpose**: Document-based NoSQL storage.
 - **Implementation**: `mongo:latest`.
 - **Access**: Direct TCP mapping on port 27017.
 
-### 2.4 Elasticsearch
+### 2.3 Elasticsearch
 - **Purpose**: Full-text search and log analytics.
 - **Implementation**: `docker.elastic.co/elasticsearch/elasticsearch:8.12.0`.
 - **Integration**: Traefik-enabled for HTTP access via `elasticsearch.rpi.local`.

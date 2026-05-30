@@ -8,7 +8,6 @@ This document covers default credentials for all lab services and how to add new
 
 - [PostgreSQL](#postgresql)
 - [MongoDB](#mongodb)
-- [MSSQL (SQL Server)](#mssql-sql-server)
 - [Elasticsearch](#elasticsearch)
 - [Redis](#redis)
 
@@ -179,88 +178,7 @@ db.revokeRolesFromUser("app_user", [{ role: "readWrite", db: "other_db" }])
 db.dropUser("app_user")
 ```
 
----
 
-## MSSQL (SQL Server)
-
-### Default Credentials
-
-| Field | Value |
-|---|---|
-| Host (internal) | `mssql:1433` |
-| Host (external) | `192.168.1.8:1433` |
-| Admin user | `sa` |
-| Admin password | `StrongPassword123!` (from `core/mssql/.env`) |
-
-> **Note**: MSSQL runs Azure SQL Edge (not full SQL Server) due to ARM64 architecture on Raspberry Pi.
-
-### Connecting
-
-```bash
-# Via docker exec
-docker exec -it mssql /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'StrongPassword123!'
-
-# Via sqlcmd from another container
-sqlcmd -S mssql -U sa -P 'StrongPassword123!'
-
-# Connection string for applications
-Server=mssql,1433;User Id=sa;Password=StrongPassword123!;
-```
-
-### Add a New Login, Database & User
-
-```sql
--- Create login (server-level principal)
-CREATE LOGIN [app_user] WITH PASSWORD = 'AnotherStrongPassword!';
-
--- Create database
-CREATE DATABASE [app_db];
-
--- Switch to the new database and create user
-USE [app_db];
-CREATE USER [app_user] FOR LOGIN [app_user];
-
--- Grant db_owner (full control)
-EXEC sp_addrolemember 'db_owner', 'app_user';
-
--- Or grant read/write only
--- EXEC sp_addrolemember 'db_datareader', 'app_user';
--- EXEC sp_addrolemember 'db_datawriter', 'app_user';
-```
-
-### Common Database Roles
-
-| Role | Description |
-|---|---|
-| `db_owner` | Full control over the database |
-| `db_datareader` | Read all data |
-| `db_datawriter` | Insert/update/delete all data |
-| `db_ddladmin` | Create/modify/drop objects |
-| `db_securityadmin` | Manage permissions |
-
-### User Management
-
-```sql
--- List logins
-SELECT name, type_desc FROM sys.server_principals WHERE type IN ('S', 'U');
-
--- List database users
-USE [app_db];
-SELECT name, type_desc FROM sys.database_principals WHERE type IN ('S', 'U');
-
--- Grant specific permissions
-USE [app_db];
-GRANT SELECT, INSERT, UPDATE, DELETE ON [dbo].[users] TO [app_user];
-
--- Remove user from database
-USE [app_db];
-DROP USER [app_user];
-
--- Drop login
-DROP LOGIN [app_user];
-```
-
----
 
 ## Elasticsearch
 
@@ -408,7 +326,6 @@ ACL DELUSER app_user
 |---|---|---|---|
 | Postgres | `postgres` | 5432 | Yes (user/pass) |
 | MongoDB | `mongo` | 27017 | Yes (user/pass) |
-| MSSQL | `mssql` | 1433 | Yes (user/pass) |
 | Elasticsearch | `elasticsearch` | 9200 | Yes (basic auth) |
 | Redis | `redis` | 6379 | No (default) |
 | n8n | `n8n_local` | 5678 | Self-registered |

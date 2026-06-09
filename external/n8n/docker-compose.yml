@@ -11,9 +11,8 @@ services:
       - .env
     environment:
       - N8N_HOST=0.0.0.0
-      - N8N_BLOCK_PYTHON_SCRIPT_EXECUTION=false
       - N8N_RUNNERS_MODE=external
-      - N8N_EXTERNAL_PYTHON_RUNNER_URL=http://python-runner:5000
+      - N8N_RUNNERS_BROKER_LISTEN_ADDRESS=0.0.0.0
       - EXECUTIONS_DATA_SAVE_ON_SUCCESS=none
     volumes:
       - ./data:/home/node/.n8n
@@ -29,8 +28,11 @@ services:
     image: n8nio/runners:latest
     container_name: n8n_python_runner
     restart: unless-stopped
-    env_file:
-      - .env
+    depends_on:
+      - n8n
+    environment:
+      - N8N_RUNNERS_TASK_BROKER_URI=http://n8n_local:5679
+      - N8N_RUNNERS_AUTH_TOKEN=${N8N_RUNNERS_AUTH_TOKEN}
     networks:
       - lab-network
 

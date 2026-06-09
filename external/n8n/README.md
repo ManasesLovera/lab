@@ -27,10 +27,11 @@ n8n is pre-configured to use the `postgres` core service.
 - **Password**: Managed in `external/n8n/.env` (`DB_POSTGRESDB_PASSWORD`).
 - **Connection**: It uses the container name `postgres` as the host within the `lab-network`.
 
-## Python Availability
-This setup includes a dedicated `python-runner` service.
-- **How to use**: In any n8n node that supports code, select **Python** as the language.
-- **Environment**: The runner has common libraries installed. To add more, you would need to rebuild the `python-runner` image with additional `pip install` commands.
+## Python & JavaScript Runners
+This setup includes a dedicated `python-runner` service (`n8nio/runners`) that connects to n8n's built-in **Task Broker** (port 5679) to execute Code node tasks.
+- **How to use**: In any Code node, select **Python** (or **JavaScript**) as the language.
+- **Architecture**: n8n exposes a task broker at `0.0.0.0:5679`. The runner connects via `N8N_RUNNERS_TASK_BROKER_URI` and authenticates with a shared `N8N_RUNNERS_AUTH_TOKEN`.
+- **Environment**: The runner has common libraries pre-installed. To add more, extend the runner image with additional `pip install` commands.
 
 ## Networking & Access Control
 

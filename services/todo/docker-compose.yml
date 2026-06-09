@@ -1,0 +1,17 @@
+name: todo
+
+services:
+  todo:
+    build: .
+    container_name: todo
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - lab-network
+
+networks:
+  lab-network:
+    external: true

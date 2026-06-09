@@ -4,113 +4,99 @@ This repository contains the architectural blueprint for a modular, local develo
 
 ## Architecture Overview
 
-The lab is organized into four main directories based on the intent and lifecycle of the services:
+The lab is organized into logical directories based on the intent and lifecycle of the services:
 
-### 1. core/ - Infrastructure & Shared Services
-
+### 1. [core/](file:///home/mlovera/lab/core/) - Infrastructure & Shared Services
 Baseline services that support the entire lab. These are generally "always-on."
-
+* **proxy**: Nginx-based reverse proxy managing `.rpi.local` and `.mlovera.dev` domain routing ([ADR 002](file:///home/mlovera/lab/adr/002-revert-to-nginx.md)).
 * **postgres**: Centralized PostgreSQL 17 instance with dynamic multi-database/user initialization.
-* **proxy**: Nginx-based reverse proxy managing `.rpi.local` and `.mlovera.dev` domain routing.
+* **mongo**: MongoDB document database.
 * **redis**: Centralized Redis instance for shared caching.
 * **elasticsearch**: Search and analytics engine.
-* **mongo**: MongoDB document database.
 * **cloudflared**: Cloudflare Tunnel for secure remote access.
 
-### 2. external/ - Third-Party Applications
-
+### 2. [external/](file:///home/mlovera/lab/external/) - Third-Party Applications
 Pre-built tools and platforms managed via Docker Compose.
+* **n8n**: Workflow automation (backed by core Postgres and featuring a Python runner sidecar).
 
-* **n8n**: Workflow automation (backed by core Postgres).
-
-### 3. services/ - Internal/Custom Development
-
+### 3. [services/](file:///home/mlovera/lab/services/) - Internal/Custom Development
 Placeholder for custom apps and internal source code.
 
-### 4. shared/ - Scripts & Utilities
+### 4. [shared/](file:///home/mlovera/lab/shared/) - Scripts & Utilities
+Core automation logic, network configuration, and local management CLIs (`lab`, `secrets`).
 
-Core automation logic, network configuration, and the lab CLI.
+### 5. [adr/](file:///home/mlovera/lab/adr/) - Architecture Decision Records
+Design log documenting major architectural shifts (e.g., transition to Traefik, reverting to Nginx, removing centralized Azurite).
+
+### 6. [docs/](file:///home/mlovera/lab/docs/) & [specs/](file:///home/mlovera/lab/specs/) - Documentation & Specifications
+Detailed guides on networking, user credentials, and core services expansion specifications.
 
 ---
 
-## Management CLI (lab)
+## Management Utilities (lab & secrets)
 
-The lab includes a custom Bash CLI for streamlined management. Once setup, it is available globally via the `lab` command.
+The lab provides two custom Bash CLI tools to streamline development and credentials management.
 
-### Usage
-
-* `lab list` - Scans all directories and lists available projects.
-* `lab ps` - Shows running status of all lab projects.
-* `lab ps -a` - Shows status of all projects, including stopped ones.
+### The `lab` CLI
+Located at [shared/lab](file:///home/mlovera/lab/shared/lab), this manages project lifecycles dynamically:
+* `lab list` - Scans directories and lists all available projects.
+* `lab ps [-a]` - Shows status of all projects, including active endpoints and direct IP:Port mappings.
 * `lab up <name>` - Starts a specific project (e.g., `lab up n8n`).
 * `lab down <name>` - Stops a specific project.
 * `lab logs <name>` - Tails the real-time logs for a project.
-* `lab help` - Shows the full command guide.
+
+### The `secrets` CLI
+Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is backed by a local SQLite DB for credentials and audit logs:
+* `secrets list` - Shows all active credentials found in project `.env` files.
+* `secrets store <key> <value>` - Securely stores a key-value secret.
+* `secrets get <key>` - Retrieves a stored secret.
+* `secrets db create-user <postgres|mongo> <dbname> <username> <password>` - Automatically provisions database users and databases in the running containers.
+* `secrets history` - Displays the user creation audit trail.
 
 ---
 
 ## Quick Start
 
 ### 1. Requirements
-
-* **OS**: Ubuntu 22.04 LTS or newer.
+* **OS**: Ubuntu 22.04 LTS or newer (Linux system required).
 * **Docker**: Docker Engine and Docker Compose V2 installed.
 * **Permissions**: Current user must be in the `docker` group.
 
 ### 2. Initialization
-
-Run the idempotent setup script to configure DNS, initialize the lab-network, inject aliases, and install the lab CLI into your path:
-
+Run the idempotent setup script to configure Docker DNS, initialize the `lab-network`, inject aliases, and symlink the CLIs to your PATH:
 ```bash
 source ./shared/setup-lab.sh
 ```
 
-### 3. Accessing the Lab
-
-Once initialized, the core infrastructure (Postgres, Proxy, Redis, etc.) will start automatically. Access your services at:
-
-| Service | Local URL | Direct IP:Port |
-|---|---|---|
-| n8n | http://n8n.rpi.local | `192.168.1.8:5678` |
-| elasticsearch | http://elasticsearch.rpi.local | `192.168.1.8:9200` |
-| postgres | — | `192.168.1.8:5432` |
-| mongo | — | `192.168.1.8:27017` |
-| redis | — | `192.168.1.8:6379` |
-
-*(Note: Add `192.168.1.8` entries to your `/etc/hosts` or use the helper command provided during setup for `.rpi.local` resolution.)*
-
-### 4. Production Access
-
-Services with a `*.mlovera.dev` production domain are exposed via Cloudflare Tunnel. See `core/cloudflared/README.md` for details.
+### 3. Running Services
+Once initialized, start your core databases or tools:
+```bash
+lab up postgres
+lab up proxy
+```
 
 ---
 
-## Default Credentials
-
-| Service | User | Password | Auth Method |
-|---|---|---|---|
-| **Postgres** | `admin` | `P@ssw0rd!Adm1n#2024` | Password (`.env`) |
-| **MongoDB** | `admin` | `admin_password` | Password (`.env`) |
-| **Elasticsearch** | `elastic` | `admin_password` | Basic Auth (`.env`) |
-| **Redis** | *(none — no auth)* | — | Network-only |
-| **n8n** | *(self-registered)* | *(first-run setup)* | Registration form |
-
-See `docs/credentials.md` for detailed user management, permission grants, and how to add new users to each database.
-
----
-
-## Networking
+## Networking & Access Control
 
 All containers communicate over a unified bridge network named `lab-network`. This enables service discovery via container names (e.g., n8n connecting to `postgres:5432`).
 
-### HTTP Routing
+### Local & Production Access
+| Service | Local URL (*.rpi.local) | Production URL (*.mlovera.dev) | Port Mapping (Direct) |
+|---|---|---|---|
+| **n8n** | http://n8n.rpi.local | https://n8n.mlovera.dev | `5678` |
+| **elasticsearch** | http://elasticsearch.rpi.local | — | `9200` |
+| **postgres** | — | — | `5432` |
+| **mongo** | — | — | `27017` |
+| **redis** | — | — | `6379` |
 
-HTTP traffic is handled by Nginx (`lab-proxy`) via `core/proxy/conf.d/proxy.conf`. To expose a new HTTP service:
-1. Edit `core/proxy/conf.d/proxy.conf` to add a `server_name` and `proxy_pass` block.
-2. Reload the proxy: `docker exec lab-proxy nginx -s reload`.
+### Exposing a New HTTP Service
+1. Edit the Nginx configuration file at [core/proxy/conf.d/proxy.conf](file:///home/mlovera/lab/core/proxy/conf.d/proxy.conf) to add a `server` block.
+2. Reload Nginx dynamically:
+   ```bash
+   docker exec lab-proxy nginx -s reload
+   ```
+3. For remote production access, configure a public hostname mapping to `http://lab-proxy:80` inside the Cloudflare Zero Trust Dashboard (traffic is routed via the `cloudflared` tunnel).
 
-### Remote Access
+For full details, refer to the [Networking Guide](file:///home/mlovera/lab/docs/networking.md) and [Credentials Guide](file:///home/mlovera/lab/docs/credentials.md).
 
-Production traffic (`*.mlovera.dev`) is routed through Cloudflare Tunnel (`cloudflared`) to `lab-proxy:80`, which matches the production `server_name` entries in the Nginx config.
-
-See `docs/networking.md` for full routing and access control details.

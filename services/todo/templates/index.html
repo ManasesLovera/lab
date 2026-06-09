@@ -35,20 +35,20 @@
                 <p class="text-sm text-[#6B7280] font-medium tracking-tight mb-0.5">Task management</p>
                 <div class="flex items-center gap-3">
                     <h1 class="text-3xl font-extrabold tracking-tight text-[#111827]">Task Hub</h1>
-                    <span class="inline-flex items-center bg-purple-50 text-purple-700 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase">Focus mode</span>
+                    <span class="inline-flex items-center bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide uppercase">Focus mode</span>
                 </div>
             </div>
             
             <!-- Header Actions & Navigation -->
             <div class="flex flex-wrap items-center gap-4 w-full md:w-auto">
                 <nav class="flex items-center gap-1">
-                    <a href="#" class="px-3 py-1.5 text-sm font-semibold text-[#111827] bg-slate-50 rounded-lg">My tasks</a>
-                    <a href="#" class="px-3 py-1.5 text-sm font-medium text-[#6B7280] hover:text-[#111827] transition">Calendar</a>
-                    <a href="#" class="px-3 py-1.5 text-sm font-medium text-[#6B7280] hover:text-[#111827] transition">Team plan</a>
+                    <button @click="activeView = 'tasks'" :class="activeView === 'tasks' ? 'text-[#111827] bg-slate-50 font-semibold' : 'text-[#6B7280] font-medium hover:text-[#111827]'" class="px-3 py-1.5 text-sm rounded-lg transition">My tasks</button>
+                    <button @click="activeView = 'calendar'" :class="activeView === 'calendar' ? 'text-[#111827] bg-slate-50 font-semibold' : 'text-[#6B7280] font-medium hover:text-[#111827]'" class="px-3 py-1.5 text-sm rounded-lg transition">Calendar</button>
+                    <button @click="activeView = 'team'" :class="activeView === 'team' ? 'text-[#111827] bg-slate-50 font-semibold' : 'text-[#6B7280] font-medium hover:text-[#111827]'" class="px-3 py-1.5 text-sm rounded-lg transition">Team plan</button>
                 </nav>
                 
                 <!-- Search bar -->
-                <div class="relative">
+                <div class="relative" x-show="activeView !== 'team'">
                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -67,12 +67,12 @@
             </div>
         </header>
 
-        <!-- Main Layout (Two-Column Grid) -->
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-            
+        <!-- Main Layout Views -->
+        
+        <!-- Tab 1: Tasks Grid View -->
+        <main x-show="activeView === 'tasks'" x-transition class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
             <!-- Left Column: Form & Active Task Registry (7 cols) -->
             <section class="lg:col-span-7 space-y-10">
-                
                 <!-- Task Details Creation Card -->
                 <div class="space-y-6">
                     <div>
@@ -146,7 +146,7 @@
 
                     <div class="space-y-1">
                         <template x-for="todo in filteredTodos" :key="todo.id">
-                            <div class="flex items-start justify-between py-4 border-b border-slate-55 transition group" :class="todo.status === 'completed' ? 'opacity-40' : ''">
+                            <div class="flex items-start justify-between py-4 border-b border-slate-50 transition group" :class="todo.status === 'completed' ? 'opacity-40' : ''">
                                 <div class="flex items-start gap-4 flex-1 min-w-0">
                                     <!-- Checkbox -->
                                     <button @click="toggleStatus(todo)" class="mt-1 w-5 h-5 rounded-full border border-slate-300 flex items-center justify-center hover:border-slate-900 bg-white transition" :class="todo.status === 'completed' ? 'bg-zinc-900 border-zinc-900 text-white' : ''">
@@ -246,6 +246,145 @@
                 </div>
             </aside>
         </main>
+        
+        <!-- Tab 2: Calendar Full Grid View -->
+        <main x-show="activeView === 'calendar'" x-transition class="space-y-6">
+            <!-- Calendar Navigation & Header Controls -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-[#111827] flex items-center gap-3">
+                        <span x-text="currentMonthName + ' ' + currentYear"></span>
+                    </h2>
+                    <p class="text-sm text-[#6B7280]">Select a day cell to schedule a task directly on that date.</p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button @click="prevMonth()" class="p-2 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button @click="goToToday()" class="px-4 py-2 text-sm font-semibold text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                        Today
+                    </button>
+                    <button @click="nextMonth()" class="p-2 text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Weekdays Row -->
+            <div class="grid grid-cols-7 gap-px text-center mb-1 text-xs font-semibold text-[#6B7280] uppercase tracking-wider">
+                <div class="py-2">Sun</div>
+                <div class="py-2">Mon</div>
+                <div class="py-2">Tue</div>
+                <div class="py-2">Wed</div>
+                <div class="py-2">Thu</div>
+                <div class="py-2">Fri</div>
+                <div class="py-2">Sat</div>
+            </div>
+            
+            <!-- Grid Calendar Cells (gap-px bg-slate-200 acts as 1px border lines) -->
+            <div class="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden">
+                <template x-for="day in calendarDays" :key="day.date.toISOString()">
+                    <div @click.self="selectDateForNewTask(day.date)" 
+                         class="bg-white min-h-[120px] p-2 flex flex-col justify-between hover:bg-slate-50/50 transition cursor-pointer select-none"
+                         :class="{ 'opacity-50 bg-slate-50/20': !day.isCurrentMonth }">
+                        
+                        <!-- Day Number & Today indicator -->
+                        <div class="flex justify-between items-center mb-2" @click.self="selectDateForNewTask(day.date)">
+                            <span class="text-xs font-semibold flex items-center justify-center rounded-full transition"
+                                  :class="day.isToday ? 'bg-zinc-900 text-white w-6 h-6' : 'text-[#111827] w-6 h-6'"
+                                  x-text="day.dayNum"></span>
+                        </div>
+                        
+                        <!-- Tasks Container inside Cell -->
+                        <div class="flex-1 space-y-1 overflow-y-auto max-h-[80px]" @click.self="selectDateForNewTask(day.date)">
+                            <template x-for="todo in day.todos.slice(0, 3)" :key="todo.id">
+                                <div @click="cycleStatus(todo)"
+                                     class="text-[10px] leading-tight px-2 py-1 rounded font-semibold flex items-center gap-1 cursor-pointer truncate transition hover:opacity-85"
+                                     :class="{
+                                         'bg-blue-50 text-blue-700': todo.status === 'in_review',
+                                         'bg-slate-100 text-slate-600': todo.status === 'queued',
+                                         'bg-purple-50 text-purple-700': todo.status === 'scheduled',
+                                         'bg-emerald-50 text-emerald-700 line-through opacity-65': todo.status === 'completed'
+                                     }">
+                                    <!-- Status dot -->
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0"
+                                          :class="{
+                                              'bg-blue-500': todo.status === 'in_review',
+                                              'bg-slate-500': todo.status === 'queued',
+                                              'bg-purple-500': todo.status === 'scheduled',
+                                              'bg-emerald-500': todo.status === 'completed'
+                                          }"></span>
+                                    <span class="truncate" x-text="todo.title"></span>
+                                </div>
+                            </template>
+                            
+                            <!-- More indicator if more than 3 tasks exist -->
+                            <div x-show="day.todos.length > 3" class="text-[9px] text-[#6B7280] font-semibold pl-1" x-text="'+' + (day.todos.length - 3) + ' more'"></div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </main>
+        
+        <!-- Tab 3: Team Plan Overview View -->
+        <main x-show="activeView === 'team'" x-transition class="space-y-6">
+            <div>
+                <h2 class="text-xl font-bold text-[#111827] mb-2">Team plan</h2>
+                <p class="text-sm text-[#6B7280]">Overview of team members and active task distribution.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Team Member Card 1 -->
+                <div class="border border-slate-100 p-6 rounded-xl space-y-4">
+                    <div class="flex items-center gap-3">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80" alt="Alex River" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#111827]">Alex River</h3>
+                            <p class="text-xs text-[#6B7280]">Lead Designer</p>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-50 flex justify-between text-xs text-slate-500">
+                        <span>Active Tasks</span>
+                        <span class="font-semibold text-slate-900" x-text="todos.filter(t => t.owner.toLowerCase().includes('alex') && t.status !== 'completed').length"></span>
+                    </div>
+                </div>
+                
+                <!-- Team Member Card 2 -->
+                <div class="border border-slate-100 p-6 rounded-xl space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm">JD</div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#111827]">Jane Doe</h3>
+                            <p class="text-xs text-[#6B7280]">Software Engineer</p>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-50 flex justify-between text-xs text-slate-500">
+                        <span>Active Tasks</span>
+                        <span class="font-semibold text-slate-900" x-text="todos.filter(t => t.owner.toLowerCase().includes('jane') && t.status !== 'completed').length"></span>
+                    </div>
+                </div>
+                
+                <!-- Team Member Card 3 -->
+                <div class="border border-slate-100 p-6 rounded-xl space-y-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-sm">US</div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-[#111827]">Unassigned</h3>
+                            <p class="text-xs text-[#6B7280]">Shared Pool</p>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-50 flex justify-between text-xs text-slate-500">
+                        <span>Active Tasks</span>
+                        <span class="font-semibold text-slate-900" x-text="todos.filter(t => (!t.owner || t.owner.trim() === '' || t.owner.toLowerCase().includes('unassigned')) && t.status !== 'completed').length"></span>
+                    </div>
+                </div>
+            </div>
+        </main>
 
         <!-- Developer MCP configuration (Collapsible footer) -->
         <footer class="mt-16 pt-8 border-t border-slate-100">
@@ -261,7 +400,7 @@
                         </svg>
                     </span>
                 </summary>
-                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8 text-xs text-slate-600 bg-slate-50 p-6 rounded-xl border border-slate-100">
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-8 text-xs text-slate-650 bg-slate-50 p-6 rounded-xl border border-slate-100">
                     <div class="space-y-4">
                         <h4 class="font-bold text-slate-800 uppercase tracking-wider">Protocol Connection URI</h4>
                         <div class="flex">
@@ -281,19 +420,19 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-[10px]">
                             <div class="border border-slate-200 p-3 rounded-lg bg-white">
                                 <div class="text-indigo-650 font-bold mb-1">list_todos</div>
-                                <div class="text-slate-500">Query registry state with status filters.</div>
+                                <div class="text-slate-550">Query registry state with status filters.</div>
                             </div>
                             <div class="border border-slate-200 p-3 rounded-lg bg-white">
                                 <div class="text-indigo-650 font-bold mb-1">create_todo</div>
-                                <div class="text-slate-500">Add a tasks with details and deadline.</div>
+                                <div class="text-slate-555">Add a tasks with details and deadline.</div>
                             </div>
                             <div class="border border-slate-200 p-3 rounded-lg bg-white">
                                 <div class="text-indigo-650 font-bold mb-1">update_todo</div>
-                                <div class="text-slate-500">Toggle status or edit details on records.</div>
+                                <div class="text-slate-555">Toggle status or edit details on records.</div>
                             </div>
                             <div class="border border-slate-200 p-3 rounded-lg bg-white">
                                 <div class="text-indigo-650 font-bold mb-1">delete_todo</div>
-                                <div class="text-slate-500">Erase todo item by UUID reference.</div>
+                                <div class="text-slate-555">Erase todo item by UUID reference.</div>
                             </div>
                         </div>
                     </div>
@@ -308,12 +447,14 @@
             return {
                 todos: [],
                 searchQuery: '',
+                activeView: 'tasks',
                 newTodo: {
                     title: '',
                     description: '',
                     owner: '',
                     deadline: ''
                 },
+                currentDate: new Date(),
                 agentLogs: [
                     { time: 'Just now', group: 'Today', level: 'SYS', message: 'Task Hub UI environment initialized.' },
                     { time: '2m ago', group: 'Today', level: 'AGENT', message: 'SSE MCP protocol server handshake complete.' },
@@ -451,11 +592,14 @@
                     }
                 },
                 focusForm() {
-                    const titleInput = document.getElementById('title');
-                    if (titleInput) {
-                        titleInput.scrollIntoView({ behavior: 'smooth' });
-                        titleInput.focus();
-                    }
+                    this.activeView = 'tasks';
+                    this.$nextTick(() => {
+                        const titleInput = document.getElementById('title');
+                        if (titleInput) {
+                            titleInput.scrollIntoView({ behavior: 'smooth' });
+                            titleInput.focus();
+                        }
+                    });
                 },
                 formatDate(dateStr) {
                     const d = new Date(dateStr);
@@ -463,7 +607,6 @@
                 },
                 formatDeadline(dateStr) {
                     if (!dateStr) return '';
-                    // Check if dateStr matches YYYY-MM-DD
                     const d = new Date(dateStr);
                     if (isNaN(d.getTime())) return dateStr;
                     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -495,6 +638,97 @@
                     if (diffHours < 24) return `${diffHours}h ago`;
                     return `${diffDays}d ago`;
                 },
+                
+                // Calendar Methods & Getters
+                get currentMonthName() {
+                    return this.currentDate.toLocaleString('default', { month: 'long' });
+                },
+                get currentYear() {
+                    return this.currentDate.getFullYear();
+                },
+                get calendarDays() {
+                    const year = this.currentDate.getFullYear();
+                    const month = this.currentDate.getMonth();
+                    
+                    const firstDayIndex = new Date(year, month, 1).getDay();
+                    const totalDays = new Date(year, month + 1, 0).getDate();
+                    const prevTotalDays = new Date(year, month, 0).getDate();
+                    
+                    const days = [];
+                    
+                    // Previous month padding days
+                    for (let i = firstDayIndex - 1; i >= 0; i--) {
+                        const d = new Date(year, month - 1, prevTotalDays - i);
+                        days.push({
+                            date: d,
+                            dayNum: prevTotalDays - i,
+                            isCurrentMonth: false,
+                            isToday: this.isSameDate(d, new Date()),
+                            todos: this.getTodosForDate(d)
+                        });
+                    }
+                    
+                    // Current month days
+                    for (let i = 1; i <= totalDays; i++) {
+                        const d = new Date(year, month, i);
+                        days.push({
+                            date: d,
+                            dayNum: i,
+                            isCurrentMonth: true,
+                            isToday: this.isSameDate(d, new Date()),
+                            todos: this.getTodosForDate(d)
+                        });
+                    }
+                    
+                    // Next month padding days to complete 42 cell grid
+                    const remainingCells = 42 - days.length;
+                    for (let i = 1; i <= remainingCells; i++) {
+                        const d = new Date(year, month + 1, i);
+                        days.push({
+                            date: d,
+                            dayNum: i,
+                            isCurrentMonth: false,
+                            isToday: this.isSameDate(d, new Date()),
+                            todos: this.getTodosForDate(d)
+                        });
+                    }
+                    
+                    return days;
+                },
+                isSameDate(d1, d2) {
+                    return d1.getFullYear() === d2.getFullYear() &&
+                           d1.getMonth() === d2.getMonth() &&
+                           d1.getDate() === d2.getDate();
+                },
+                getTodosForDate(date) {
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    const targetDateStr = `${yyyy}-${mm}-${dd}`;
+                    
+                    return this.todos.filter(todo => {
+                        if (!todo.deadline) return false;
+                        const todoDateStr = todo.deadline.substring(0, 10);
+                        return todoDateStr === targetDateStr;
+                    });
+                },
+                prevMonth() {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() - 1, 1);
+                },
+                nextMonth() {
+                    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 1);
+                },
+                goToToday() {
+                    this.currentDate = new Date();
+                },
+                selectDateForNewTask(date) {
+                    const yyyy = date.getFullYear();
+                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                    const dd = String(date.getDate()).padStart(2, '0');
+                    this.newTodo.deadline = `${yyyy}-${mm}-${dd}`;
+                    this.focusForm();
+                },
+
                 get filteredTodos() {
                     let list = this.todos;
                     if (this.searchQuery.trim() !== '') {

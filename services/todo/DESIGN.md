@@ -67,6 +67,12 @@ The layout uses a responsive 12-column CSS Grid to balance focus between task cr
 +-------------------------------------------------------------------------+
 ```
 
+### Subviews
+
+In addition to the default tasks grid layout, the application supports two additional subviews accessible via the header navigation:
+1.  **Calendar View:** A full-width monthly calendar grid displaying due tasks and allowing direct scheduling.
+2.  **Team Plan View:** A dashboard highlighting current task distribution among team members.
+
 ---
 
 ## 4. Components
@@ -74,8 +80,8 @@ The layout uses a responsive 12-column CSS Grid to balance focus between task cr
 ### A. Header
 *   **Top-Left Subtitle:** `"Task management"` (14px, muted gray) above the main title.
 *   **Title:** `"Task Hub"` (30px, bold slate-900) placed beside a light purple Focus Mode badge (`bg-purple-50`, `text-purple-700`).
-*   **Top-Right Navigation:** Light, flat hover links for list navigation.
-*   **Search bar:** Flat, rounded search input filter with inline magnifying glass icon.
+*   **Top-Right Navigation:** Button triggers to switch the active view (`tasks`, `calendar`, `team`) with active tab states (`bg-slate-50`).
+*   **Search bar:** Flat, rounded search input filter with inline magnifying glass icon (active in tasks and calendar views).
 *   **Primary Action:** A compact, rounded `"New task"` button in zinc-900.
 
 ### B. Task Details Form
@@ -103,10 +109,28 @@ The layout uses a responsive 12-column CSS Grid to balance focus between task cr
     *   `SYS`: Gray (`bg-slate-400`)
     *   `ERROR`: Red (`bg-red-500`)
 
+### E. Calendar Grid View
+*   **Dynamic Month Generation:** Alpine.js logic generates 42-day grids (padding previous/next month days) matching the active month.
+*   **Header Controls:** Left/right navigation buttons for month-stepping, and a "Today" reset button.
+*   **Cell Layout:**
+    *   Grid dividers use a 1px gap showing the `bg-slate-200` background.
+    *   Today is highlighted with a dark background circle (`bg-zinc-900`) containing the day number in white.
+    *   Includes a list of up to 3 task pills matching their respective statuses, and a `"+x more"` indicator if more than 3 tasks exist on a date.
+    *   Sibling month cells are rendered with 50% opacity.
+
+### F. Team Plan View
+*   **Distribution Cards:** Displays team member statistics (Alex River, Jane Doe, and Unassigned).
+*   **Dynamic Statistics:** Queries the local state client-side using reactive filters to show real-time numbers of active tasks assigned to each member.
+
 ---
 
 ## 5. Interaction Design
 
-1.  **Status Cycling:** Clicking on a status pill in the Active Tasks list cycles the task through the statuses: `scheduled` ➡️ `in_review` ➡️ `queued` ➡️ `completed` and performs a partial `PUT` update to the database.
-2.  **Inplace Search:** Standard search filters tasks by matching strings in the title, description, owner, or status pill text instantly.
+1.  **Status Cycling:** Clicking on a status pill in either the Active Tasks list or the Calendar view cycles the task through the statuses: `scheduled` ➡️ `in_review` ➡️ `queued` ➡️ `completed` and performs a partial `PUT` update to the database.
+2.  **Inplace Search:** Standard search filters tasks by matching strings in the title, description, owner, or status pill text instantly (applies to both tasks list and calendar days).
 3.  **Handoff Focus:** Clicking the "New task" button triggers a smooth scroll to the Task creation form and automatically focuses the Title input.
+4.  **Calendar Selection:** Clicking on any day cell in the calendar automatically:
+    *   Formats the clicked date as `YYYY-MM-DD`.
+    *   Sets the task form's deadline date.
+    *   Switches the active view to `'tasks'`.
+    *   Focuses the title input to trigger immediate task scheduling.

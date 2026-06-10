@@ -457,36 +457,10 @@
                 currentDate: new Date(),
                 agentLogs: [
                     { time: 'Just now', group: 'Today', level: 'SYS', message: 'Task Hub UI environment initialized.' },
-                    { time: '2m ago', group: 'Today', level: 'AGENT', message: 'SSE MCP protocol server handshake complete.' },
-                    { time: '10m ago', group: 'Today', level: 'DATABASE', message: 'Connected to shared PostgreSQL database' },
-                    
-                    { time: '2:15 PM', group: 'Yesterday', level: 'USER', message: 'Completed task: "Draft system architecture docs"' },
-                    { time: '11:00 AM', group: 'Yesterday', level: 'DATABASE', message: 'Optimized index on todos table' },
-                    
-                    { time: 'Jun 7', group: 'Earlier', level: 'SYS', message: 'Sourced setup-lab.sh helper scripts' },
-                    { time: 'Jun 6', group: 'Earlier', level: 'SYS', message: 'Initialized postgres database container' }
+                    { time: 'Just now', group: 'Today', level: 'DATABASE', message: 'Connected to shared PostgreSQL database.' }
                 ],
                 init() {
                     this.fetchTodos();
-                    
-                    // Periodically add mock agent events so the timeline feels alive
-                    setInterval(() => {
-                        const now = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-                        const events = [
-                            { level: 'AGENT', message: 'Connected from Cursor-Agent (SSE protocol)' },
-                            { level: 'AGENT', message: 'Executed database query tool "list_todos" (status: pending)' },
-                            { level: 'DATABASE', message: 'Read todo records (count: ' + this.todos.length + ')' },
-                            { level: 'AGENT', message: 'SSE Connection heartbeat frame verified' }
-                        ];
-                        const randomEvent = events[Math.floor(Math.random() * events.length)];
-                        this.agentLogs.unshift({
-                            time: 'Just now',
-                            group: 'Today',
-                            level: randomEvent.level,
-                            message: randomEvent.message
-                        });
-                        if (this.agentLogs.length > 50) this.agentLogs.pop();
-                    }, 40000);
                 },
                 addLog(level, message) {
                     this.agentLogs.unshift({

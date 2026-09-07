@@ -23,6 +23,9 @@
 *.key
 *.pem
 
+# Cloudflare Tunnel credentials (contains tunnel secret)
+core/cloudflared/credentials.json
+
 # Logs
 **/logs/
 *.log

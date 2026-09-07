@@ -5,8 +5,12 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: lab-cloudflared
     restart: unless-stopped
-    # Matches the user's provided command: tunnel --no-autoupdate run --token <token>
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    # Locally-managed mode: --config is a GLOBAL flag (must precede the subcommand). Runs from the
+    # mounted config.yml + credentials.json instead of the Zero Trust dashboard token.
+    command: --no-autoupdate --config /etc/cloudflared/config.yml tunnel run
+    volumes:
+      - ./config.yml:/etc/cloudflared/config.yml:ro
+      - ./credentials.json:/etc/cloudflared/credentials.json:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:

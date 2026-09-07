@@ -1,5 +1,5 @@
 # Cloudflare Tunnel Configuration
-tunnel: ${TUNNEL_ID}
+tunnel: f7e3682a-86c5-46a2-857a-8ee2c2d78e49
 credentials-file: /etc/cloudflared/credentials.json
 
 ingress:

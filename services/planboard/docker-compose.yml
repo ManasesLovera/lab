@@ -1,0 +1,27 @@
+name: planboard
+
+services:
+  planboard:
+    image: ghcr.io/weleec/planboard:latest
+    container_name: planboard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PB_DB: postgres
+    networks:
+      - lab-network
+    healthcheck:
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  lab-network:
+    external: true

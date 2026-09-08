@@ -20,7 +20,9 @@ Pre-built tools and platforms managed via Docker Compose.
 * **n8n**: Workflow automation (backed by core Postgres and featuring a Python runner sidecar).
 
 ### 3. [services/](file:///home/mlovera/lab/services/) - Internal/Custom Development
-Placeholder for custom apps and internal source code.
+Custom apps and internal source code.
+* **todo**: Lightweight Go/Fiber todo app + MCP server (backed by core Postgres).
+* **planboard**: Curriculum planning web app for WELEEC (Bun/Next.js) deployed from `ghcr.io/weleec/planboard`, backed by core Postgres.
 
 ### 4. [shared/](file:///home/mlovera/lab/shared/) - Scripts & Utilities
 Core automation logic, network configuration, and local management CLIs (`lab`, `secrets`).
@@ -85,6 +87,8 @@ All containers communicate over a unified bridge network named `lab-network`. Th
 | Service | Local URL (*.rpi.local) | Production URL (*.mlovera.dev) | Port Mapping (Direct) |
 |---|---|---|---|
 | **n8n** | http://n8n.rpi.local | https://n8n.mlovera.dev | `5678` |
+| **todo** | http://todo.rpi.local | https://todo.mlovera.dev | `3000` |
+| **planboard** | http://planboard.rpi.local | https://planboard.mlovera.dev | — |
 | **elasticsearch** | http://elasticsearch.rpi.local | — | `9200` |
 | **postgres** | — | — | `5432` |
 | **mongo** | — | — | `27017` |

@@ -48,6 +48,14 @@ server {
 
 3. Reload nginx: `docker exec lab-proxy nginx -s reload`
 
+**Resolving `*.rpi.local` on a client.** The nginx server blocks do not make the names resolvable — there is no DNS server for `.rpi.local`. To browse these URLs from a machine on the LAN, point the names at the Pi's IP. On the Pi itself (or any Linux host), sync the hostnames from `proxy.conf` into `/etc/hosts`:
+
+```bash
+sudo ./shared/local-hosts.sh            # or: sudo ./shared/local-hosts.sh 10.90.100.139
+```
+
+The script reads every `server_name` ending in `.rpi.local` from `core/proxy/conf.d/proxy.conf` and rewrites a managed, clearly delimited block in `/etc/hosts` (stale entries are removed automatically). On other OSes, add the equivalent `/etc/hosts` / `C:\Windows\System32\drivers\etc\hosts` lines manually, or point the router's DNS at a resolver that wildcards `*.rpi.local` to the Pi.
+
 ## 2. Production/Remote Access (*.mlovera.dev)
 To expose a service to the internet via the Cloudflare Tunnel:
 

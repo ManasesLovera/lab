@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #f8fafc;
+            margin-bottom: 10px;
+        }
+        .system-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .system-info span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .live-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .gauge {
+            margin-bottom: 20px;
+        }
+        .gauge:last-child {
+            margin-bottom: 0;
+        }
+        .gauge-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .gauge-label {
+            color: #cbd5e1;
+        }
+        .gauge-value {
+            font-weight: 600;
+        }
+        .gauge-bar {
+            height: 12px;
+            background: #334155;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .gauge-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 0.5s ease;
+        }
+        .color-green { background: #22c55e; }
+        .color-yellow { background: #eab308; }
+        .color-orange { background: #f97316; }
+        .color-red { background: #ef4444; }
+        .folder-section {
+            margin-bottom: 24px;
+        }
+        .folder-section:last-child {
+            margin-bottom: 0;
+        }
+        .folder-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .folder-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+        .folder-size {
+            font-size: 13px;
+            color: #64748b;
+        }
+        .folder-track {
+            height: 24px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .folder-fill {
+            height: 100%;
+            background: #3b82f6;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .sub-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            gap: 10px;
+            padding-left: 16px;
+        }
+        .sub-name {
+            width: 120px;
+            font-size: 12px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .sub-track {
+            flex: 1;
+            height: 16px;
+            background: #1e293b;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .sub-fill {
+            height: 100%;
+            background: #60a5fa;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .sub-size {
+            width: 70px;
+            text-align: right;
+            font-size: 12px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #334155;
+        }
+        td {
+            padding: 10px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #1e293b;
+        }
+        tr:hover {
+            background: #1e293b;
+        }
+        .proc-name {
+            color: #e2e8f0;
+            font-weight: 500;
+        }
+        .proc-pid {
+            color: #64748b;
+            font-family: monospace;
+        }
+        .proc-cpu {
+            color: #f97316;
+            font-weight: 600;
+        }
+        .proc-ram {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .uptime-help {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            .system-info {
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>System Monitor</h1>
+        <div class="system-info">
+            <span><span class="live-dot"></span><span id="hostname">Loading...</span></span>
+            <span title="How long the system has been running since last boot">⏱ <span id="uptime">--</span></span>
+            <span>🌡 <span id="temp">--</span>°C</span>
+            <span>📶 <span id="ssid">--</span></span>
+            <span>🌐 <span id="ip">--</span></span>
+        </div>
+        <div class="uptime-help">⏱ Uptime = time since last reboot</div>
+    </div>
+
+    <div class="grid">
+        <!-- CPU Card -->
+        <div class="card">
+            <h2>CPU</h2>
+            <div class="gauge">
+                <div class="gauge-header">
+                    <span class="gauge-label">Usage</span>
+                    <span class="gauge-value" id="cpu-percent">0%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill color-green" id="cpu-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div style="font-size: 13px; color: #64748b;">
+                <div id="cpu-cores">-- cores</div>
+                <div id="cpu-model" style="margin-top: 4px;">--</div>
+            </div>
+        </div>
+
+        <!-- RAM Card -->
+        <div class="card">
+            <h2>Memory</h2>
+            <div class="gauge">
+                <div class="gauge-header">
+                    <span class="gauge-label">Usage</span>
+                    <span class="gauge-value" id="ram-percent">0%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill color-green" id="ram-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div style="font-size: 13px; color: #64748b;">
+                <span id="ram-used">--</span> / <span id="ram-total">--</span>
+                <span style="margin-left: 10px;">(<span id="ram-available">--</span> available)</span>
+            </div>
+        </div>
+
+        <!-- Disk Card -->
+        <div class="card">
+            <h2>Disk</h2>
+            <div class="gauge">
+                <div class="gauge-header">
+                    <span class="gauge-label">Usage</span>
+                    <span class="gauge-value" id="disk-percent">0%</span>
+                </div>
+                <div class="gauge-bar">
+                    <div class="gauge-fill color-green" id="disk-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div style="font-size: 13px; color: #64748b;">
+                <span id="disk-used">--</span> / <span id="disk-total">--</span>
+                <span style="margin-left: 10px;">(<span id="disk-available">--</span> free)</span>
+            </div>
+        </div>
+
+        <!-- Docker Card -->
+        <div class="card">
+            <h2>Docker Storage</h2>
+            <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
+                <span id="docker-total">--</span> total
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Images</span>
+                    <span id="docker-images" style="color: #e2e8f0; font-weight: 500;">--</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Containers</span>
+                    <span id="docker-containers" style="color: #e2e8f0; font-weight: 500;">--</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Volumes</span>
+                    <span id="docker-volumes" style="color: #e2e8f0; font-weight: 500;">--</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardware Card -->
+        <div class="card full-width">
+            <h2>Hardware</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Board</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-board">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Platform</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-platform">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Kernel</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-kernel">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Arch</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-arch">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Serial</div>
+                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500; font-family: monospace;" id="hw-serial">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Revision</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-revision">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">GPU Memory</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-gpu">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Firmware</div>
+                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500;" id="hw-firmware">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">USB Devices</div>
+                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-usb">--</div>
+                </div>
+                <div>
+                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Ethernet MAC</div>
+                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500; font-family: monospace;" id="hw-ether">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disk Distribution Card -->
+        <div class="card full-width">
+            <h2>Disk Distribution</h2>
+            <div id="folder-bars"></div>
+        </div>
+
+        <!-- Processes Card -->
+        <div class="card full-width">
+            <h2>Top Processes</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>PID</th>
+                        <th>Name</th>
+                        <th>CPU %</th>
+                        <th>RAM %</th>
+                    </tr>
+                </thead>
+                <tbody id="process-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function getColor(percent) {
+            if (percent < 50) return 'color-green';
+            if (percent < 75) return 'color-yellow';
+            if (percent < 90) return 'color-orange';
+            return 'color-red';
+        }
+
+        function updateGauge(barId, percentId, percent) {
+            const bar = document.getElementById(barId);
+            const label = document.getElementById(percentId);
+            bar.style.width = percent + '%';
+            bar.className = 'gauge-fill ' + getColor(percent);
+            label.textContent = percent.toFixed(1) + '%';
+        }
+
+        function updateFolderBars(folders) {
+            const container = document.getElementById('folder-bars');
+            const maxSize = Math.max(...folders.map(f => f.size));
+            
+            container.innerHTML = folders.map(folder => {
+                const width = (folder.size / maxSize * 100).toFixed(1);
+                
+                let subsHtml = '';
+                if (folder.subs && folder.subs.length > 0) {
+                    const maxSubSize = Math.max(...folder.subs.map(s => s.size));
+                    subsHtml = '<div class="subs-container">' + folder.subs.map(sub => {
+                        const subWidth = (sub.size / maxSubSize * 100).toFixed(1);
+                        return `
+                            <div class="sub-bar">
+                                <span class="sub-name">${sub.path}</span>
+                                <div class="sub-track">
+                                    <div class="sub-fill" style="width: ${subWidth}%"></div>
+                                </div>
+                                <span class="sub-size">${formatBytes(sub.size)}</span>
+                            </div>
+                        `;
+                    }).join('') + '</div>';
+                }
+                
+                return `
+                    <div class="folder-section">
+                        <div class="folder-header">
+                            <span class="folder-name">/${folder.path}</span>
+                            <span class="folder-size">${formatBytes(folder.size)}</span>
+                        </div>
+                        <div class="folder-track">
+                            <div class="folder-fill" style="width: ${width}%"></div>
+                        </div>
+                        ${subsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateProcessTable(procs) {
+            const tbody = document.getElementById('process-table');
+            tbody.innerHTML = procs.map(p => `
+                <tr>
+                    <td class="proc-pid">${p.pid}</td>
+                    <td class="proc-name">${p.name}</td>
+                    <td class="proc-cpu">${p.cpu.toFixed(1)}%</td>
+                    <td class="proc-ram">${p.ram.toFixed(1)}%</td>
+                </tr>
+            `).join('');
+        }
+
+        function updateDashboard(data) {
+            // System info
+            document.getElementById('hostname').textContent = data.hostname;
+            document.getElementById('uptime').textContent = data.uptime;
+            document.getElementById('temp').textContent = data.temp.toFixed(1);
+            document.getElementById('ssid').textContent = data.network.ssid || 'N/A';
+            document.getElementById('ip').textContent = data.network.ip || 'N/A';
+
+            // CPU
+            updateGauge('cpu-bar', 'cpu-percent', data.cpu.percent);
+            document.getElementById('cpu-cores').textContent = data.cpu.cores + ' cores';
+            document.getElementById('cpu-model').textContent = data.cpu.model;
+
+            // RAM
+            updateGauge('ram-bar', 'ram-percent', data.ram.percent);
+            document.getElementById('ram-used').textContent = formatBytes(data.ram.used);
+            document.getElementById('ram-total').textContent = formatBytes(data.ram.total);
+            document.getElementById('ram-available').textContent = formatBytes(data.ram.available);
+
+            // Disk
+            updateGauge('disk-bar', 'disk-percent', data.disk.percent);
+            document.getElementById('disk-used').textContent = formatBytes(data.disk.used);
+            document.getElementById('disk-total').textContent = formatBytes(data.disk.total);
+            document.getElementById('disk-available').textContent = formatBytes(data.disk.available);
+
+            // Docker
+            document.getElementById('docker-total').textContent = formatBytes(data.disk.docker.total);
+            document.getElementById('docker-images').textContent = formatBytes(data.disk.docker.images);
+            document.getElementById('docker-containers').textContent = formatBytes(data.disk.docker.containers);
+            document.getElementById('docker-volumes').textContent = formatBytes(data.disk.docker.volumes);
+
+            // Hardware
+            document.getElementById('hw-board').textContent = data.hardware.board;
+            document.getElementById('hw-platform').textContent = data.hardware.platform;
+            document.getElementById('hw-kernel').textContent = data.hardware.kernel;
+            document.getElementById('hw-arch').textContent = data.hardware.arch;
+            document.getElementById('hw-serial').textContent = data.hardware.serial;
+            document.getElementById('hw-revision').textContent = data.hardware.revision;
+            document.getElementById('hw-gpu').textContent = data.hardware.gpu;
+            document.getElementById('hw-firmware').textContent = data.hardware.firmware;
+            document.getElementById('hw-usb').textContent = data.hardware.usb;
+            document.getElementById('hw-ether').textContent = data.hardware.ethernet;
+
+            // Folders
+            updateFolderBars(data.disk.folders);
+
+            // Processes
+            updateProcessTable(data.processes);
+        }
+
+        // Use SSE for live streaming
+        const eventSource = new EventSource('/api/stream');
+        
+        eventSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                updateDashboard(data);
+            } catch (err) {
+                console.error('Failed to parse SSE data:', err);
+            }
+        };
+
+        eventSource.onerror = function(err) {
+            console.error('SSE connection error:', err);
+            // Fallback to polling if SSE fails
+            setTimeout(() => {
+                fetch('/api/stats')
+                    .then(res => res.json())
+                    .then(data => updateDashboard(data))
+                    .catch(err => console.error('Fallback fetch failed:', err));
+            }, 5000);
+        };
+
+        // Initial fetch as backup
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => updateDashboard(data))
+            .catch(err => console.error('Initial fetch failed:', err));
+    </script>
+</body>
+</html>

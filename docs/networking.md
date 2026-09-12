@@ -9,6 +9,7 @@ This guide explains how to manage access to your services within the Lab environ
 | **n8n** | `http://n8n.rpi.local` | `https://n8n.mlovera.dev` | 5678 |
 | **Todo** | `http://todo.rpi.local` | `https://todo.mlovera.dev` | 3000 |
 | **Planboard** | `http://planboard.rpi.local` | `https://planboard.mlovera.dev` | 3000 |
+| **Monitor** | `http://monitor.rpi.local` | `https://monitor.mlovera.dev` | — |
 | **Elasticsearch**| `http://elasticsearch.rpi.local` | — | 9200 |
 | **Postgres** | *(IP only)* | — | 5432 |
 | **MongoDB** | *(IP only)* | — | 27017 |

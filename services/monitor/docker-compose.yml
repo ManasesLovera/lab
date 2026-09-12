@@ -1,0 +1,35 @@
+name: monitor
+
+services:
+  monitor:
+    build: .
+    container_name: monitor
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Report the host's metrics from inside the container.
+      HOST_ROOT: /host
+      HOST_PROC: /host/proc
+      HOST_SYS: /host/sys
+      HOST_ETC: /host/etc
+    volumes:
+      # Host root (read-only) for disk usage + folder breakdown.
+      - /:/host:ro
+      # Host process/hardware view.
+      - /proc:/host/proc:ro
+      # Host thermal zones + NIC info.
+      - /sys:/host/sys:ro
+      # Docker storage stats (`docker system df`).
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - lab-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  lab-network:
+    external: true

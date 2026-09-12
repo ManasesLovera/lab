@@ -23,6 +23,7 @@ Pre-built tools and platforms managed via Docker Compose.
 Custom apps and internal source code.
 * **todo**: Lightweight Go/Fiber todo app + MCP server (backed by core Postgres).
 * **planboard**: Curriculum planning web app for WELEEC (Bun/Next.js) deployed from `ghcr.io/weleec/planboard`, backed by core Postgres.
+* **monitor**: Raspberry Pi system dashboard (Go) streaming CPU/RAM/disk stats, protected by HTTP basic auth.
 
 ### 4. [shared/](file:///home/mlovera/lab/shared/) - Scripts & Utilities
 Core automation logic, network configuration, and local management CLIs (`lab`, `secrets`).
@@ -89,6 +90,7 @@ All containers communicate over a unified bridge network named `lab-network`. Th
 | **n8n** | http://n8n.rpi.local | https://n8n.mlovera.dev | `5678` |
 | **todo** | http://todo.rpi.local | https://todo.mlovera.dev | `3000` |
 | **planboard** | http://planboard.rpi.local | https://planboard.mlovera.dev | — |
+| **monitor** | http://monitor.rpi.local | https://monitor.mlovera.dev | — |
 | **elasticsearch** | http://elasticsearch.rpi.local | — | `9200` |
 | **postgres** | — | — | `5432` |
 | **mongo** | — | — | `27017` |

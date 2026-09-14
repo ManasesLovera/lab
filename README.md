@@ -49,7 +49,7 @@ Located at [shared/lab](file:///home/mlovera/lab/shared/lab), this manages proje
 * `lab logs <name>` - Tails the real-time logs for a project.
 
 ### The `secrets` CLI
-Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is backed by a local SQLite DB of structured credential entries (plaintext at rest, `700`/`600` permissions) plus a DB-user audit log:
+Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is backed by a local SQLite DB of structured credential entries (plaintext at rest, `700`/`600` permissions) plus a per-field change history and a DB-user audit log. Set `SECRETS_HISTORY=0` to disable change tracking for a single invocation.
 * `secrets list [--type T] [--tag TAG] [--json] [-s]` - Lists entries (passwords hidden unless `-s`).
 * `secrets show <name>` - Shows every field of an entry.
 * `secrets get <name> [--field F]` - Prints a single field (default `password`) for scripting.
@@ -58,6 +58,8 @@ Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is ba
 * `secrets export [--format csv|json] [--output FILE] [--no-passwords] [--type T] [--tag TAG]` - Exports entries as CSV or JSON (defaults to JSON on stdout; files are written mode `600`).
 * `secrets scan` - Lists credentials found in project `.env` files.
 * `secrets db create-user <postgres|mongo> <dbname> <username> <password>` - Automatically provisions database users and databases in the running containers.
+* `secrets changes [<name>] [--field F] [--limit N] [--all] [--json] [--reveal]` - Shows per-field credential change history (`create`/`update`/`delete`/`import`). Values are masked unless `--reveal`.
+* `secrets changes prune [--keep N] [--older-than DAYS] [--yes]` - Trims stored change history per entry.
 * `secrets history` - Displays the user creation audit trail.
 
 ---

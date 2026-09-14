@@ -55,6 +55,7 @@ Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is ba
 * `secrets get <name> [--field F]` - Prints a single field (default `password`) for scripting.
 * `secrets add|set <name> [--type login|api_key|database|ssh|note|env|totp] [--url U] [--username U] [--password P] [--description D] [--tags a,b] [--meta JSON]` - Creates (`add`) or upserts (`set`) an entry. Omit the `--password` value to be prompted; use `--generate` or `--password-stdin` for automation.
 * `secrets rm <name> [--yes]` / `secrets copy <name> [--field F]` - Delete an entry / copy a field to the clipboard.
+* `secrets export [--format csv|json] [--output FILE] [--no-passwords] [--type T] [--tag TAG]` - Exports entries as CSV or JSON (defaults to JSON on stdout; files are written mode `600`).
 * `secrets scan` - Lists credentials found in project `.env` files.
 * `secrets db create-user <postgres|mongo> <dbname> <username> <password>` - Automatically provisions database users and databases in the running containers.
 * `secrets history` - Displays the user creation audit trail.

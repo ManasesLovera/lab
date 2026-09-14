@@ -13,7 +13,7 @@ lab up postgres
 - **Host**: `192.168.1.8` (or your Pi's IP) / `postgres` (Container Network)
 - **Port**: `5432`
 - **Admin User**: `admin`
-- **Password**: Defined in `.env` (Use `secrets get postgres_admin_password` to check)
+- **Password**: Defined in `.env` (Use `secrets get postgres_admin` to check)
 
 ---
 
@@ -80,9 +80,11 @@ END \$\$;"
 ### Check Stored Credentials
 The lab maintains a local secrets manager for easy retrieval:
 ```bash
-secrets list                        # Show all discovered .env credentials
-secrets get postgres_admin_password # Get specific admin password
-secrets get postgres_n8n_password   # Get specific app password
+secrets list                        # List entries (add -s to reveal passwords)
+secrets show postgres_admin         # Show all fields of the admin entry
+secrets get postgres_admin          # Admin password (default field)
+secrets get postgres_n8n            # n8n app password
+secrets get postgres_admin_password # Legacy key names still resolve
 secrets history                     # See history of users created via 'secrets db'
 ```
 

@@ -38,7 +38,7 @@ Detailed guides on networking, user credentials, and core services expansion spe
 
 ## Management Utilities (lab & secrets)
 
-The lab provides two custom Bash CLI tools to streamline development and credentials management.
+The lab provides two custom CLI tools to streamline development and credentials management.
 
 ### The `lab` CLI
 Located at [shared/lab](file:///home/mlovera/lab/shared/lab), this manages project lifecycles dynamically:
@@ -49,10 +49,13 @@ Located at [shared/lab](file:///home/mlovera/lab/shared/lab), this manages proje
 * `lab logs <name>` - Tails the real-time logs for a project.
 
 ### The `secrets` CLI
-Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is backed by a local SQLite DB for credentials and audit logs:
-* `secrets list` - Shows all active credentials found in project `.env` files.
-* `secrets store <key> <value>` - Securely stores a key-value secret.
-* `secrets get <key>` - Retrieves a stored secret.
+Located at [shared/secrets](file:///home/mlovera/lab/shared/secrets), this is backed by a local SQLite DB of structured credential entries (plaintext at rest, `700`/`600` permissions) plus a DB-user audit log:
+* `secrets list [--type T] [--tag TAG] [--json] [-s]` - Lists entries (passwords hidden unless `-s`).
+* `secrets show <name>` - Shows every field of an entry.
+* `secrets get <name> [--field F]` - Prints a single field (default `password`) for scripting.
+* `secrets add|set <name> [--type login|api_key|database|ssh|note|env|totp] [--url U] [--username U] [--password P] [--description D] [--tags a,b] [--meta JSON]` - Creates (`add`) or upserts (`set`) an entry. Omit the `--password` value to be prompted; use `--generate` or `--password-stdin` for automation.
+* `secrets rm <name> [--yes]` / `secrets copy <name> [--field F]` - Delete an entry / copy a field to the clipboard.
+* `secrets scan` - Lists credentials found in project `.env` files.
 * `secrets db create-user <postgres|mongo> <dbname> <username> <password>` - Automatically provisions database users and databases in the running containers.
 * `secrets history` - Displays the user creation audit trail.
 

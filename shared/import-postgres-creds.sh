@@ -49,16 +49,26 @@ if ! docker exec postgres test -f /var/lib/postgresql/data/.init-credentials 2>/
     fi
 fi
 
-# Process the credentials file
+# Process the credentials file. Each line is:  <db>:<user>:<password>
 docker exec postgres cat /var/lib/postgresql/data/.init-credentials | while IFS=: read -r db user password; do
     if [[ -n "$db" && -n "$user" && -n "$password" ]]; then
         echo -e "${GREEN}Storing credentials for: $db${NC}"
-        "$SECRETS_TOOL" store "postgres_${db}_password" "$password"
-        
-        # For the admin superuser, also store the username
         if [[ "$db" == "admin" ]]; then
-            "$SECRETS_TOOL" store "postgres_admin_user" "$user"
+            name="postgres_admin"
+            desc="Postgres superuser"
+            database="postgres"
+        else
+            name="postgres_${db}"
+            desc="Postgres database ${db}"
+            database="$db"
         fi
+        printf '%s' "$password" | "$SECRETS_TOOL" set "$name" \
+            --type database \
+            --url "postgres:5432" \
+            --username "$user" \
+            --description "$desc" \
+            --meta "{\"host\": \"postgres\", \"port\": 5432, \"database\": \"$database\"}" \
+            --password-stdin
     fi
 done
 

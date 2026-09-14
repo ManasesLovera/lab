@@ -32,6 +32,10 @@ core/cloudflared/credentials.json
 **/*.log
 n8nEventLog*
 
+# Python
+__pycache__/
+*.pyc
+
 # OS files
 .DS_Store
 Thumbs.db

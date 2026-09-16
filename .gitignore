@@ -20,6 +20,9 @@
 
 # Environment & Secrets
 .env
+# `.env` above matches that basename only, so per-deployment env files need
+# naming explicitly or they get committed.
+.env.dev
 *.key
 *.pem
 

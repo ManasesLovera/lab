@@ -26,11 +26,48 @@ Curriculum planning web application for WELEEC (Bun/Next.js), deployed from `ghc
    lab up planboard
    ```
 
+## Staging: planboard-dev
+
+`planboard-dev.mlovera.dev` runs the same image from the same Dockerfile, one tag apart, so an
+unreleased build can be tried before a release tag exists.
+
+| | Production | Staging |
+| --- | --- | --- |
+| Hostname | `planboard.mlovera.dev` | `planboard-dev.mlovera.dev` |
+| Container | `planboard` | `planboard-dev` |
+| Image tag | `ghcr.io/weleec/planboard:latest` | `ghcr.io/weleec/planboard:dev` |
+| Moved by | a release tag `vX.Y.Z` | a pre-release tag `vX.Y.Z-dev.N` |
+| Database | lab Postgres | SQLite on the `planboard-dev-data` volume, always |
+
+Cutting a staging build is done from the app repo (`git tag -a v1.2.0-dev.1 && git push origin
+v1.2.0-dev.1`); CI publishes it and moves `dev` only. Then here:
+
+```bash
+docker compose pull planboard-dev && docker compose up -d planboard-dev
+lab logs planboard          # both services; expect the [migrate] applied … lines
+```
+
+Name the service. A bare `lab up planboard` or `docker compose up -d` restarts production too,
+which is not what a staging test should cost.
+
+The volume starts empty, so the first boot migrates a fresh database and serves a login page
+with no users in it. Seed it with a scratch admin rather than a copy of the school's data.
+
+Two things that are deliberate, not gaps:
+
+- **Staging never gets `PB_DATABASE_URL`.** `PB_DB: sqlite` is in the compose `environment:`
+  block, which overrides `env_file:`, and `.env.dev` is documented as holding no database
+  credential. That is the whole reason a wrong migration in an unreleased build cannot reach
+  the school's data.
+- **A green staging run says nothing about Postgres.** It exercises SQLite, the driver CI
+  already covers. The hand-verification of the Postgres path before a release does not go away
+  — if anything staging is the tempting reason to skip it.
+
 ## How to Use
 
-- **Web UI**: Access the UI in your browser at `http://planboard.rpi.local` or `https://planboard.mlovera.dev`.
+- **Web UI**: Access the UI in your browser at `http://planboard.rpi.local` or `https://planboard.mlovera.dev`. Staging answers at `planboard-dev.rpi.local` / `https://planboard-dev.mlovera.dev`.
 - **Health check**: `GET /api/health` runs a real database query (unauthenticated; reports `driver` and status only).
-- **Logs**: `lab logs planboard`
+- **Logs**: `lab logs planboard` (both services), or `docker compose logs -f planboard-dev` for staging alone
 
 ## Configuration
 

@@ -1,6 +1,8 @@
 name: planboard
 
 services:
+  # Production, at planboard.mlovera.dev. Pinned to `latest`, which CI moves only
+  # on a release tag vX.Y.Z — never on a pre-release.
   planboard:
     image: ghcr.io/weleec/planboard:latest
     container_name: planboard
@@ -21,6 +23,55 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  # --------------------------------------------------------------------------
+  # Staging, at planboard-dev.mlovera.dev. Same image, one tag apart: `dev` is
+  # moved only by a SemVer pre-release tag (vX.Y.Z-dev.N), `latest` above only by
+  # a release tag (vX.Y.Z). Nothing a pre-release publishes can reach the service
+  # the school uses.
+  #
+  # It is SQLite, on its own volume, permanently — that is what makes it a safe
+  # place to try an unreleased build. Two things keep it that way:
+  #
+  #   * `PB_DB: sqlite` sits in `environment:`, which overrides `env_file:`, so a
+  #     stray PB_DB=postgres in a copied env file cannot flip it; and
+  #   * in SQLite mode the app ignores PB_DATABASE_URL even when it is set.
+  #
+  # Do not give this service the production database URL anyway. To test against
+  # realistic content, restore a dump into a scratch database — never point
+  # staging at the live one.
+  planboard-dev:
+    image: ghcr.io/weleec/planboard:dev
+    container_name: planboard-dev
+    restart: unless-stopped
+    env_file:
+      # Optional, and holds no database credential. Staging leaves mail on the
+      # default `console` transport on purpose: a staging build must not be able
+      # to send mail to real teachers.
+      - path: .env.dev
+        required: false
+    environment:
+      PB_DB: sqlite
+      # Never /app/data — that holds the three export templates baked into the
+      # image, and a volume over it breaks every export.
+      PB_SQLITE_PATH: /app/var/weleec.db
+    volumes:
+      - planboard-dev-data:/app/var
+    networks:
+      - lab-network
+    healthcheck:
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  planboard-dev-data:
 
 networks:
   lab-network:

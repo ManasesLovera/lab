@@ -55,11 +55,43 @@ services:
       # Never /app/data — that holds the three export templates baked into the
       # image, and a volume over it breaks every export.
       PB_SQLITE_PATH: /app/var/weleec.db
+      # The public OAuth resource and issuer. Both the web app (authorization
+      # endpoints) and the separate MCP process must agree on these values.
+      PB_MCP_URL: https://planboard-dev.mlovera.dev/mcp
+      PB_MCP_ISSUER: https://planboard-dev.mlovera.dev
     volumes:
       - planboard-dev-data:/app/var
     networks:
       - lab-network
     healthcheck:
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # The MCP transport is deliberately a second process. It shares only the
+  # staging SQLite volume with the web app, never the production database.
+  planboard-dev-mcp:
+    image: ghcr.io/weleec/planboard:dev
+    container_name: planboard-dev-mcp
+    restart: unless-stopped
+    command: ["bun", "scripts/mcp-http-server.ts"]
+    environment:
+      PB_DB: sqlite
+      PB_SQLITE_PATH: /app/var/weleec.db
+      PB_MCP_URL: https://planboard-dev.mlovera.dev/mcp
+      PB_MCP_ISSUER: https://planboard-dev.mlovera.dev
+    volumes:
+      - planboard-dev-data:/app/var
+    networks:
+      - lab-network
+    healthcheck:
+      test: ["CMD", "bun", "--eval", "fetch('http://127.0.0.1:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       start_period: 60s
       interval: 30s
       timeout: 10s

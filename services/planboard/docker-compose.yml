@@ -82,6 +82,7 @@ services:
     restart: unless-stopped
     command: ["bun", "scripts/mcp-http-server.ts"]
     environment:
+      PORT: 3010
       PB_DB: sqlite
       PB_SQLITE_PATH: /app/var/weleec.db
       PB_MCP_URL: https://planboard-dev.mlovera.dev/mcp

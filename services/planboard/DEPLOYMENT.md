@@ -10,32 +10,43 @@ the arrangement is shaped this way; this file assumes you are standing in front 
 | LAN | `planboard.rpi.local` | `planboard-dev.rpi.local` |
 | Compose service | `planboard` | `planboard-dev` (+ `planboard-dev-mcp`) |
 | Image tag | `ghcr.io/weleec/planboard:latest` | `ghcr.io/weleec/planboard:dev` |
-| Moved by | a release tag `vX.Y.Z` | a pre-release tag `vX.Y.Z-dev.N` |
+| Moved by | a release tag `vX.Y.Z`, pushed by a human | a pre-release tag `vX.Y.Z-dev.N`, cut by CI on every merge to `development` |
 | Database | lab Postgres, container `postgres` | SQLite on the `planboard-dev-data` volume |
 | Environment file | `.env` (required) | `.env.dev` (optional) |
 
-**Nothing deploys on a merge.** CI builds an image for every push to `development` and throws
-it away. Pushing a *tag* is the deploy trigger, and pulling on the Pi is what actually swaps
-the running container. Two separate acts — there is no approval step between them, and no
+**Staging deploys on every merge; production never does.** A merge to `development` that
+changes more than docs is tagged `vX.Y.Z-dev.N`, built, and deployed to staging by the GitHub
+Actions runner on this Pi (see [README.md](README.md#the-github-actions-runner)). Production
+moves only when a human pushes a release tag *and* pulls here — two separate acts, with no
 automatic pull.
 
 ## Deploying to staging
 
-The normal path for anything unreleased. From a clone of the application repository:
+**Automatic.** Merge to `development`; the merge's CI run does the rest:
 
 ```bash
-git checkout development && git pull
-git tag -a v1.4.0-dev.5 -m "v1.4.0-dev.5 - what is being tried"
-git push origin v1.4.0-dev.5
-gh run watch                      # ~6 min: unit tests, types, arm64 image
+gh run watch $(gh run list -R weleec/planboard --branch development --limit 1 \
+  --json databaseId --jq '.[0].databaseId') -R weleec/planboard --exit-status
 ```
 
-Numbering is SemVer pre-releases **of the version being worked towards**, not of the one in
-production. With 1.3.0 released, staging builds are `v1.4.0-dev.1`, `-dev.2`, …; `N` restarts
-at 1 for each new `X.Y.Z`. Do not bump `version` in `package.json` for a pre-release — it
-records the released version, and a dev tag is not a release.
+`Staging tag` prints the tag it cut (or `none` for a docs-only merge), `Build image` publishes
+`:dev`, and `Deploy staging` runs `scripts/deploy-staging.sh` on this Pi: back up staging's
+SQLite into `~/backups` (newest 30 kept), pull and recreate both staging services, check the
+revision label equals the commit, wait for healthy. A red `Deploy staging` is a stop — read its
+log before doing anything by hand.
 
-Then on the Pi, in this directory:
+Numbering is SemVer pre-releases **of the version being worked towards**, not of the one in
+production, computed from the Conventional Commit subjects since the last release. With 1.7.0
+released and a `feat` merged, staging builds are `v1.8.0-dev.1`, `-dev.2`, …; `N` restarts at
+1 for each new `X.Y.Z`. Do not cut dev tags by hand: two tags for one version collide on `N`.
+
+**By hand**, only when the runner is down — the same script, from the app checkout:
+
+```bash
+~/dev/planboard/scripts/deploy-staging.sh <commit-sha>
+```
+
+Or the individual steps, in this directory:
 
 ```bash
 docker compose pull planboard-dev planboard-dev-mcp

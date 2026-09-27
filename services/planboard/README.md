@@ -36,19 +36,21 @@ unreleased build can be tried before a release tag exists.
 | Hostname | `planboard.mlovera.dev` | `planboard-dev.mlovera.dev` |
 | Container | `planboard` | `planboard-dev` |
 | Image tag | `ghcr.io/weleec/planboard:latest` | `ghcr.io/weleec/planboard:dev` |
-| Moved by | a release tag `vX.Y.Z` | a pre-release tag `vX.Y.Z-dev.N` |
+| Moved by | a release tag `vX.Y.Z`, pushed by a human | a pre-release tag `vX.Y.Z-dev.N`, cut and deployed automatically on every merge to `development` |
 | Database | lab Postgres | SQLite on the `planboard-dev-data` volume, always |
 
-Cutting a staging build is done from the app repo (`git tag -a v1.2.0-dev.1 && git push origin
-v1.2.0-dev.1`); CI publishes it and moves `dev` only. Then here:
+**Staging deploys itself.** Every merge to `development` in the app repo that changes more
+than docs gets the next `vX.Y.Z-dev.N` tag, publishes `:dev`, and is deployed here by the
+GitHub Actions runner described below. Nobody cuts dev tags or pulls staging by hand any more.
+If the runner is down, deploy by hand with the same script it runs:
 
 ```bash
-docker compose pull planboard-dev && docker compose up -d planboard-dev
+~/dev/planboard/scripts/deploy-staging.sh <commit-sha>
 lab logs planboard          # both services; expect the [migrate] applied … lines
 ```
 
-Name the service. A bare `lab up planboard` or `docker compose up -d` restarts production too,
-which is not what a staging test should cost.
+If you ever do run compose by hand, name the services. A bare `lab up planboard` or
+`docker compose up -d` restarts production too, which is not what a staging test should cost.
 
 The volume starts empty, so the first boot migrates a fresh database and serves a login page
 with no users in it. Seed it with a scratch admin rather than a copy of the school's data.
@@ -62,6 +64,60 @@ Two things that are deliberate, not gaps:
 - **A green staging run says nothing about Postgres.** It exercises SQLite, the driver CI
   already covers. The hand-verification of the Postgres path before a release does not go away
   — if anything staging is the tempting reason to skip it.
+
+## The GitHub Actions runner
+
+Staging deploys itself, and the thing that does it runs on this Pi: a GitHub Actions
+self-hosted runner registered on `weleec/planboard`.
+
+| | |
+| --- | --- |
+| Directory | `~/runners/planboard` — **outside this repository, and outside every other** |
+| Runner name | `pi5-planboard`, labels `self-hosted` and `pi` |
+| Runs as | `mlovera`, systemd unit `actions.runner.weleec-planboard.pi5-planboard.service` |
+| Takes | `Deploy staging` only, on every merge to `development` that changes more than docs |
+| Touches | `planboard-dev` and `planboard-dev-mcp` in this directory, and `~/backups` |
+
+It keeps an outbound connection open to GitHub and receives the job over it; nothing connects
+in, and neither nginx nor the tunnel is involved. The job runs `scripts/deploy-staging.sh`
+from the application repository: back up staging's SQLite into `~/backups`, pull and recreate
+both staging services, check the revision label equals the commit, wait for healthy. It never
+names a production service.
+
+**Why it is not in this repository.** This repository is public. The runner's directory holds
+the credentials that let it take jobs (`.credentials`, `.runner`) and, under `_work/`,
+checkouts of the application's private source. `.gitignore` covers neither, so keeping it
+here would be one `git add -A` away from publishing both. It is also a self-updating binary,
+not source, and it is rebuilt with a fresh registration rather than restored — nothing in it is
+worth versioning.
+
+**Why it runs as `mlovera`.** `docker compose` reads every service's `env_file` when it loads
+this project, so even `docker compose pull planboard-dev` fails without a readable `.env`; the
+image is private and pulled with this user's ghcr login; and `docker` group membership is root
+here in all but name, so a separate user would isolate nothing.
+
+**One runner per repository.** A runner serves one repository or one organisation, and a
+personal account has no account-wide runners, so it cannot also serve this repository or any
+other `ManasesLovera/*` one. Another repository that deploys on this Pi gets its own runner in
+`~/runners/<repo>/`.
+
+**Rebuilding it** (new SD card, lost registration) — the prerequisites above (ghcr login,
+`.env`, `.env.dev`) plus `mkdir -p ~/backups`, then:
+
+```bash
+V=2.337.0   # current: https://github.com/actions/runner/releases
+mkdir -p ~/runners/planboard && cd ~/runners/planboard
+curl -sfLO https://github.com/actions/runner/releases/download/v$V/actions-runner-linux-arm64-$V.tar.gz
+tar xzf actions-runner-linux-arm64-$V.tar.gz && rm actions-runner-linux-arm64-$V.tar.gz
+./config.sh --unattended --url https://github.com/weleec/planboard \
+  --token "$(gh api -X POST repos/weleec/planboard/actions/runners/registration-token --jq .token)" \
+  --name pi5-planboard --labels pi     # add --replace if the old registration is still listed
+sudo ./svc.sh install mlovera && sudo ./svc.sh start
+gh api repos/weleec/planboard/actions/runners --jq '.runners[] | "\(.name) \(.status)"'
+```
+
+The full guide — operating, pausing and removing it, and the rules that keep it safe — is the
+application repository's `docs/operations/staging-runner.md`.
 
 ## How to Use
 

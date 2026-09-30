@@ -36,7 +36,7 @@ unreleased build can be tried before a release tag exists.
 | Hostname | `planboard.mlovera.dev` | `planboard-dev.mlovera.dev` |
 | Container | `planboard` | `planboard-dev` |
 | Image tag | `ghcr.io/weleec/planboard:latest` | `ghcr.io/weleec/planboard:dev` |
-| Moved by | a release tag `vX.Y.Z`, pushed by a human | a pre-release tag `vX.Y.Z-dev.N`, cut and deployed automatically on every merge to `development` |
+| Moved by | a release tag `vX.Y.Z`, cut and deployed automatically when a release pull request is merged into `main` | a pre-release tag `vX.Y.Z-dev.N`, cut and deployed automatically on every merge to `development` |
 | Database | lab Postgres | SQLite on the `planboard-dev-data` volume, always |
 
 **Staging deploys itself.** Every merge to `development` in the app repo that changes more
@@ -75,14 +75,16 @@ self-hosted runner registered on `weleec/planboard`.
 | Directory | `~/runners/planboard` — **outside this repository, and outside every other** |
 | Runner name | `pi5-planboard`, labels `self-hosted` and `pi` |
 | Runs as | `mlovera`, systemd unit `actions.runner.weleec-planboard.pi5-planboard.service` |
-| Takes | `Deploy staging` only, on every merge to `development` that changes more than docs |
-| Touches | `planboard-dev` and `planboard-dev-mcp` in this directory, and `~/backups` |
+| Takes | `Deploy staging` on every merge to `development` that changes more than docs; `Deploy production` and a read-only migration preflight for every release |
+| Touches | `planboard-dev` and `planboard-dev-mcp`, or `planboard` and `planboard-mcp` (never both in one job), `docker-compose.override.yml` in this directory, and `~/backups` |
 
 It keeps an outbound connection open to GitHub and receives the job over it; nothing connects
 in, and neither nginx nor the tunnel is involved. The job runs `scripts/deploy-staging.sh`
 from the application repository: back up staging's SQLite into `~/backups`, pull and recreate
 both staging services, check the revision label equals the commit, wait for healthy. It never
-names a production service.
+names a production service. For a release, `scripts/deploy-production.sh` does the same for
+the two production services, with a Postgres dump first and an automatic image rollback; see
+[DEPLOYMENT.md](DEPLOYMENT.md#deploying-to-production).
 
 **Why it is not in this repository.** This repository is public. The runner's directory holds
 the credentials that let it take jobs (`.credentials`, `.runner`) and, under `_work/`,

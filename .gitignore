@@ -23,6 +23,8 @@
 # `.env` above matches that basename only, so per-deployment env files need
 # naming explicitly or they get committed.
 .env.dev
+# Production's image pin, written by planboard's scripts/deploy-production.sh.
+services/planboard/docker-compose.override.yml
 *.key
 *.pem
 

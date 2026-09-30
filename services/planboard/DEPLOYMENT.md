@@ -9,16 +9,18 @@ the arrangement is shaped this way; this file assumes you are standing in front 
 | Hostname | `planboard.mlovera.dev` | `planboard-dev.mlovera.dev` |
 | LAN | `planboard.rpi.local` | `planboard-dev.rpi.local` |
 | Compose service | `planboard` | `planboard-dev` (+ `planboard-dev-mcp`) |
-| Image tag | `ghcr.io/weleec/planboard:latest` | `ghcr.io/weleec/planboard:dev` |
-| Moved by | a release tag `vX.Y.Z`, pushed by a human | a pre-release tag `vX.Y.Z-dev.N`, cut by CI on every merge to `development` |
+| Image tag | `ghcr.io/weleec/planboard:X.Y.Z`, pinned in `docker-compose.override.yml` (`latest` without it) | `ghcr.io/weleec/planboard:dev` |
+| Moved by | a release tag `vX.Y.Z`, cut and deployed by CI when a release pull request is merged into `main` | a pre-release tag `vX.Y.Z-dev.N`, cut by CI on every merge to `development` |
 | Database | lab Postgres, container `postgres` | SQLite on the `planboard-dev-data` volume |
 | Environment file | `.env` (required) | `.env.dev` (optional) |
 
-**Staging deploys on every merge; production never does.** A merge to `development` that
+**Both environments deploy themselves, on different merges.** A merge to `development` that
 changes more than docs is tagged `vX.Y.Z-dev.N`, built, and deployed to staging by the GitHub
 Actions runner on this Pi (see [README.md](README.md#the-github-actions-runner)). Production
-moves only when a human pushes a release tag *and* pulls here — two separate acts, with no
-automatic pull.
+moves when a `release/vX.Y.Z` (or `hotfix/*`) pull request is merged into `main` in the
+application repository: the same runner then runs `scripts/deploy-production.sh` here. The
+merge is the only approval, so nothing in this directory needs a hand-run command for a
+release.
 
 ## Deploying to staging
 
@@ -84,12 +86,30 @@ database and the compose `environment:` block has been edited.
 
 ## Deploying to production
 
-Production moves only on a release tag. The release procedure itself (release branch, version
-bump, changelog, PR to `main` as a merge commit, GitHub Release) lives in the application
-repository's `docs/reference/deployment.md` — do not improvise it from here. What follows is
-the Pi's half, once `vX.Y.Z` is pushed and CI has published.
+**Automatic.** The release procedure (*Prepare release*, the release pull request, the merge)
+lives in the application repository's `docs/operations/release-pipeline.md` — do not
+improvise it from here. On the merge, the runner runs `scripts/deploy-production.sh` in this
+directory, which: records `schema_migrations`' high-water mark; takes a `pg_dump` into
+`~/backups` (`weleec_planboard-<stamp>-pre-vX.Y.Z.dump`, stopping if it is under 10 KB);
+writes the version into `docker-compose.override.yml`; pulls and recreates `planboard` **and**
+`planboard-mcp`; checks both revision labels, the `[migrate] applied` lines in both logs,
+`/api/health` (`driver: postgres`) and the MCP `/health`; and on any failure pins the previous
+version back and recreates both. It never restores the database and never names a staging
+service.
 
-The database step is the one that has actually bitten. In order:
+**The image pin.** `docker-compose.override.yml` sits beside `docker-compose.yml`, and
+`docker compose` (and `lab up planboard`) load it automatically. It holds only the image
+version of the two production services; it is written by the deploy script, gitignored here,
+and editing its version is how to pin by hand. Without it, production follows `latest`.
+
+**By hand**, only when the pipeline cannot run — the same script, from the app checkout
+(`<new-migration-ids>` is e.g. `44,45` or `none`):
+
+```bash
+~/dev/planboard/scripts/deploy-production.sh X.Y.Z <commit-sha> <new-migration-ids>
+```
+
+Or the individual steps. The database step is the one that has actually bitten. In order:
 
 ```bash
 # 1. record where the schema is
@@ -101,11 +121,12 @@ mkdir -p ~/backups
 docker exec postgres pg_dump -U weleec_planboard -Fc weleec_planboard \
   > ~/backups/weleec_planboard-$(date +%F-%H%M).dump
 
-# 3. pull and start
-docker compose pull planboard && docker compose up -d planboard
+# 3. pull and start — both production services, by name (set the version in
+#    docker-compose.override.yml first if it exists)
+docker compose pull planboard planboard-mcp && docker compose up -d planboard planboard-mcp
 
-# 4. watch it migrate itself
-docker compose logs --tail=100 planboard
+# 4. watch it migrate itself — in either container: whichever connects first runs them
+docker compose logs --tail=200 planboard planboard-mcp | grep -F '[migrate]'
 
 # 5. prove it reached the database (the image has bun, not curl or wget)
 docker exec planboard bun -e \
@@ -113,8 +134,8 @@ docker exec planboard bun -e \
 # expect {"status":"ok","driver":"postgres",...}
 ```
 
-Read the log for `[migrate] applied …` lines: one per new migration, once, and nothing on
-subsequent starts. Migrations run automatically at startup and a failure **stops the
+Read both logs for `[migrate] applied …` lines: one per new migration, once across the two,
+and nothing on subsequent starts. Migrations run automatically at startup and a failure **stops the
 container** rather than serving against a half-built schema — that is the intended behaviour,
 not an outage to work around. Never write SQL by hand to get past a migration error.
 
@@ -123,13 +144,18 @@ That is a code problem; roll back and fix it in the repository.
 
 ### Rolling back
 
-Roll back the **image tag**, not the database. In `docker-compose.yml`:
+Roll back the **image tag**, not the database — the automated deploy does this itself on a
+failed check. By hand, in `docker-compose.override.yml`:
 
 ```yaml
-image: ghcr.io/weleec/planboard:1.3.0
+services:
+  planboard:
+    image: ghcr.io/weleec/planboard:1.3.0
+  planboard-mcp:
+    image: ghcr.io/weleec/planboard:1.3.0
 ```
 
-then `docker compose up -d planboard`. An older version ignores tables it does not know about,
+then `docker compose up -d planboard planboard-mcp`. An older version ignores tables it does not know about,
 so the extra tables a newer migration created are harmless to it and no restore is needed.
 Restore the dump only if a migration left the schema itself broken.
 

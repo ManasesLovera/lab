@@ -2,6 +2,8 @@
 tunnel: f7e3682a-86c5-46a2-857a-8ee2c2d78e49
 credentials-file: /etc/cloudflared/credentials.json
 
+protocol: http2
+
 ingress:
   # SSH access
   - hostname: rpi.mlovera.dev

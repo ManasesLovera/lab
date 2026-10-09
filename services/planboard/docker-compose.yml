@@ -11,9 +11,44 @@ services:
       - .env
     environment:
       PB_DB: postgres
+      # Public OAuth resource and issuer; the web app and the MCP process
+      # below must agree on both.
+      PB_MCP_URL: https://planboard.mlovera.dev/mcp
+      PB_MCP_ISSUER: https://planboard.mlovera.dev
+      PB_MCP_API_KEYS: "1"
     networks:
       - lab-network
     healthcheck:
+      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Production MCP transport: a second process on the same image and the same
+  # Postgres as the web app. nginx routes /mcp and the OAuth resource metadata
+  # path here.
+  planboard-mcp:
+    image: ghcr.io/weleec/planboard:latest
+    container_name: planboard-mcp
+    restart: unless-stopped
+    command: ["bun", "scripts/mcp-http-server.ts"]
+    env_file:
+      - .env
+    environment:
+      PORT: 3010
+      PB_DB: postgres
+      PB_MCP_URL: https://planboard.mlovera.dev/mcp
+      PB_MCP_ISSUER: https://planboard.mlovera.dev
+      PB_MCP_API_KEYS: "1"
+    networks:
+      - lab-network
+    healthcheck:
+      test: ["CMD", "bun", "--eval", "fetch('http://127.0.0.1:3010/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       start_period: 60s
       interval: 30s
       timeout: 10s
@@ -59,6 +94,7 @@ services:
       # endpoints) and the separate MCP process must agree on these values.
       PB_MCP_URL: https://planboard-dev.mlovera.dev/mcp
       PB_MCP_ISSUER: https://planboard-dev.mlovera.dev
+      PB_MCP_API_KEYS: "1"
     volumes:
       - planboard-dev-data:/app/var
     networks:
@@ -87,6 +123,7 @@ services:
       PB_SQLITE_PATH: /app/var/weleec.db
       PB_MCP_URL: https://planboard-dev.mlovera.dev/mcp
       PB_MCP_ISSUER: https://planboard-dev.mlovera.dev
+      PB_MCP_API_KEYS: "1"
     volumes:
       - planboard-dev-data:/app/var
     networks:

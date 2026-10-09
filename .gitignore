@@ -41,6 +41,14 @@ n8nEventLog*
 __pycache__/
 *.pyc
 
+# Backups written by editor/deploy tooling
+*.bak
+*.bak-*
+
+# Local binary tooling (downloaded, not vendored)
+obscura
+obscura-*-linux.tar.gz
+
 # OS files
 .DS_Store
 Thumbs.db

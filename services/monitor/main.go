@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shirou/gopsutil/v3/cpu"
@@ -52,18 +53,6 @@ func init() {
 func hostPath(p string) string { return filepath.Join(hostRoot, p) }
 func procPath(p string) string { return filepath.Join(procRoot, p) }
 func sysPath(p string) string  { return filepath.Join(sysRoot, p) }
-
-type SystemStats struct {
-	Hostname string        `json:"hostname"`
-	Uptime   string        `json:"uptime"`
-	Temp     float64       `json:"temp"`
-	Hardware HardwareStats `json:"hardware"`
-	CPU      CPUStats      `json:"cpu"`
-	RAM      RAMStats      `json:"ram"`
-	Disk     DiskStats     `json:"disk"`
-	Network  NetStats      `json:"network"`
-	Procs    []ProcInfo    `json:"processes"`
-}
 
 type HardwareStats struct {
 	Board        string `json:"board"`
@@ -127,68 +116,149 @@ type ProcInfo struct {
 	RAM  float32 `json:"ram"`
 }
 
-func getSystemStats() SystemStats {
-	stats := SystemStats{}
+// Each function below backs exactly one API endpoint, so the frontend can
+// request (and render) every section independently.
 
+type OverviewStats struct {
+	Hostname string   `json:"hostname"`
+	Uptime   string   `json:"uptime"`
+	Temp     float64  `json:"temp"`
+	Network  NetStats `json:"network"`
+}
+
+func getOverview() OverviewStats {
+	o := OverviewStats{}
 	// Hostname (prefer the host's /etc/hostname when running in a container).
 	if h, err := host.Info(); err == nil {
-		stats.Hostname = h.Hostname
+		o.Hostname = h.Hostname
 		uptime := time.Duration(h.Uptime) * time.Second
-		hours := int(uptime.Hours())
-		mins := int(uptime.Minutes()) % 60
-		stats.Uptime = fmt.Sprintf("%dh %dm", hours, mins)
+		o.Uptime = fmt.Sprintf("%dh %dm", int(uptime.Hours()), int(uptime.Minutes())%60)
 	}
 	if name, err := os.ReadFile(hostPath("etc/hostname")); err == nil {
 		if s := strings.TrimSpace(string(name)); s != "" {
-			stats.Hostname = s
+			o.Hostname = s
 		}
 	}
-
-	// Temperature
 	if temp, err := getTemperature(); err == nil {
-		stats.Temp = temp
+		o.Temp = temp
 	}
+	o.Network = getNetworkInfo()
+	return o
+}
 
-	// Hardware
-	stats.Hardware = getHardwareInfo()
-
-	// CPU
-	if cpuPercent, err := cpu.Percent(500*time.Millisecond, false); err == nil && len(cpuPercent) > 0 {
-		stats.CPU.Percent = cpuPercent[0]
+func getCPU() CPUStats {
+	c := CPUStats{}
+	if p, err := cpu.Percent(500*time.Millisecond, false); err == nil && len(p) > 0 {
+		c.Percent = p[0]
 	}
-	if cpuInfo, err := cpu.Info(); err == nil && len(cpuInfo) > 0 {
-		stats.CPU.Cores = len(cpuInfo)
-		stats.CPU.Model = cpuInfo[0].ModelName
-		if stats.CPU.Model == "" {
-			stats.CPU.Model = fmt.Sprintf("%s %s", cpuInfo[0].VendorID, cpuInfo[0].Family)
+	if info, err := cpu.Info(); err == nil && len(info) > 0 {
+		c.Cores = len(info)
+		c.Model = info[0].ModelName
+		if c.Model == "" {
+			c.Model = fmt.Sprintf("%s %s", info[0].VendorID, info[0].Family)
 		}
 	}
+	return c
+}
 
-	// RAM
+func getRAM() RAMStats {
+	r := RAMStats{}
 	if vm, err := mem.VirtualMemory(); err == nil {
-		stats.RAM.Total = vm.Total
-		stats.RAM.Used = vm.Used
-		stats.RAM.Available = vm.Available
-		stats.RAM.Percent = vm.UsedPercent
+		r.Total, r.Used, r.Available, r.Percent = vm.Total, vm.Used, vm.Available, vm.UsedPercent
 	}
+	return r
+}
 
-	// Disk
+func getDiskUsage() DiskStats {
+	d := DiskStats{}
 	if usage, err := disk.Usage(hostPath("/")); err == nil {
-		stats.Disk.Total = usage.Total
-		stats.Disk.Used = usage.Used
-		stats.Disk.Available = usage.Free
-		stats.Disk.Percent = usage.UsedPercent
+		d.Total, d.Used, d.Available, d.Percent = usage.Total, usage.Used, usage.Free, usage.UsedPercent
 	}
-	stats.Disk.Folders = getDiskFolders()
-	stats.Disk.Docker = getDockerStats()
+	return d
+}
 
-	// Network
-	stats.Network = getNetworkInfo()
+// AppHealth is the state of one container (an "app" in the lab).
+type AppHealth struct {
+	Name    string `json:"name"`
+	Image   string `json:"image"`
+	State   string `json:"state"`   // docker state: running, exited, restarting...
+	Health  string `json:"health"`  // healthy, unhealthy, starting, none
+	Status  string `json:"status"`  // docker's human status ("Up 2 days (healthy)")
+	Level   string `json:"level"`   // ok, warn, down
+	Summary string `json:"summary"` // short reason shown in the UI
+}
 
-	// Processes
-	stats.Procs = getTopProcesses(15)
+type HealthReport struct {
+	Apps    []AppHealth `json:"apps"`
+	OK      int         `json:"ok"`
+	Warn    int         `json:"warn"`
+	Down    int         `json:"down"`
+	Error   string      `json:"error,omitempty"`
+	Checked string      `json:"checked"`
+}
 
-	return stats
+func getHealth() HealthReport {
+	rep := HealthReport{Apps: []AppHealth{}, Checked: time.Now().Format(time.RFC3339)}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, "docker", "ps", "-a",
+		"--format", "{{.Names}}\t{{.Image}}\t{{.State}}\t{{.Status}}").Output()
+	if err != nil {
+		rep.Error = "cannot query docker: " + err.Error()
+		return rep
+	}
+
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		f := strings.Split(line, "\t")
+		if len(f) < 4 {
+			continue
+		}
+		a := AppHealth{Name: f[0], Image: f[1], State: f[2], Status: f[3], Health: "none"}
+		switch {
+		case strings.Contains(a.Status, "(unhealthy)"):
+			a.Health = "unhealthy"
+		case strings.Contains(a.Status, "(healthy)"):
+			a.Health = "healthy"
+		case strings.Contains(a.Status, "health: starting"):
+			a.Health = "starting"
+		}
+
+		switch {
+		case a.State != "running" && a.State != "restarting":
+			a.Level, a.Summary = "down", "container "+a.State
+		case a.State == "restarting":
+			a.Level, a.Summary = "warn", "restarting"
+		case a.Health == "unhealthy":
+			a.Level, a.Summary = "down", "healthcheck failing"
+		case a.Health == "starting":
+			a.Level, a.Summary = "warn", "starting up"
+		case a.Health == "healthy":
+			a.Level, a.Summary = "ok", "healthy"
+		default:
+			a.Level, a.Summary = "ok", "running (no healthcheck)"
+		}
+
+		switch a.Level {
+		case "ok":
+			rep.OK++
+		case "warn":
+			rep.Warn++
+		default:
+			rep.Down++
+		}
+		rep.Apps = append(rep.Apps, a)
+	}
+
+	// Problems first, then by name.
+	rank := map[string]int{"down": 0, "warn": 1, "ok": 2}
+	sort.Slice(rep.Apps, func(i, j int) bool {
+		if rank[rep.Apps[i].Level] != rank[rep.Apps[j].Level] {
+			return rank[rep.Apps[i].Level] < rank[rep.Apps[j].Level]
+		}
+		return rep.Apps[i].Name < rep.Apps[j].Name
+	})
+	return rep
 }
 
 func getTemperature() (float64, error) {
@@ -559,45 +629,36 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	tmpl.Execute(w, nil)
 }
 
-func handleStats(w http.ResponseWriter, r *http.Request) {
-	stats := getSystemStats()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+// ttlCache memoizes an expensive computation. Concurrent callers share one
+// computation (the mutex is held while computing), so a slow `du` scan never
+// runs twice at once no matter how many tabs are open.
+type ttlCache struct {
+	mu  sync.Mutex
+	at  time.Time
+	val any
 }
 
-func handleStream(w http.ResponseWriter, r *http.Request) {
-	// Set headers for SSE
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
-		return
+func (c *ttlCache) get(ttl time.Duration, fn func() any) any {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.val == nil || time.Since(c.at) > ttl {
+		c.val, c.at = fn(), time.Now()
 	}
+	return c.val
+}
 
-	// Send initial data
-	stats := getSystemStats()
-	data, _ := json.Marshal(stats)
-	fmt.Fprintf(w, "data: %s\n\n", data)
-	flusher.Flush()
+var (
+	folderCache ttlCache
+	dockerCache ttlCache
+)
 
-	// Create ticker for updates
-	ticker := time.NewTicker(5 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			stats := getSystemStats()
-			data, _ := json.Marshal(stats)
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
-		case <-r.Context().Done():
-			return
-		}
-	}
+// jsonEndpoint wraps a data function as an authenticated JSON endpoint.
+func jsonEndpoint(fn func() any) http.HandlerFunc {
+	return requireAuth(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "no-store")
+		json.NewEncoder(w).Encode(fn())
+	})
 }
 
 // requireAuth enforces HTTP Basic authentication, comparing credentials in
@@ -626,8 +687,20 @@ func main() {
 	}
 
 	http.HandleFunc("/", requireAuth(handleIndex))
-	http.HandleFunc("/api/stats", requireAuth(handleStats))
-	http.HandleFunc("/api/stream", requireAuth(handleStream))
+	http.HandleFunc("/api/overview", jsonEndpoint(func() any { return getOverview() }))
+	http.HandleFunc("/api/cpu", jsonEndpoint(func() any { return getCPU() }))
+	http.HandleFunc("/api/memory", jsonEndpoint(func() any { return getRAM() }))
+	http.HandleFunc("/api/disk", jsonEndpoint(func() any { return getDiskUsage() }))
+	http.HandleFunc("/api/hardware", jsonEndpoint(func() any { return getHardwareInfo() }))
+	http.HandleFunc("/api/processes", jsonEndpoint(func() any { return getTopProcesses(15) }))
+	http.HandleFunc("/api/health", jsonEndpoint(func() any { return getHealth() }))
+	// Slow (du scans / docker system df): cached so repeat loads are instant.
+	http.HandleFunc("/api/folders", jsonEndpoint(func() any {
+		return folderCache.get(2*time.Minute, func() any { return getDiskFolders() })
+	}))
+	http.HandleFunc("/api/docker", jsonEndpoint(func() any {
+		return dockerCache.get(30*time.Second, func() any { return getDockerStats() })
+	}))
 
 	port := os.Getenv("PORT")
 	if port == "" {

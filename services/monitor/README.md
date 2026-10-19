@@ -4,7 +4,8 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 
 ## Features
 
-- Live CPU, RAM, and disk usage via SSE streaming
+- Live CPU, RAM, and disk usage, loaded lazily per card
+- App health for every Docker container (healthy / degraded / down)
 - Process list sorted by resource usage
 - Temperature (via `vcgencmd`, falling back to the host thermal zone)
 - Hardware info (board model, serial, kernel, arch)
@@ -13,11 +14,21 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 
 ## Endpoints
 
-| Route           | Description              |
-| --------------- | ------------------------ |
-| `/`             | Web dashboard (HTML)     |
-| `/api/stats`    | JSON snapshot            |
-| `/api/stream`   | SSE stream (5s interval) |
+| Route            | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `/`              | Web dashboard (tabbed, light/dark)            |
+| `/api/overview`  | Hostname, uptime, temperature, network        |
+| `/api/cpu`       | CPU usage, cores, model                       |
+| `/api/memory`    | RAM usage                                     |
+| `/api/disk`      | Root disk usage                               |
+| `/api/hardware`  | Board, kernel, serial, firmware               |
+| `/api/processes` | Top processes                                 |
+| `/api/health`    | Health of every container (ok / warn / down)  |
+| `/api/folders`   | Folder size breakdown (slow, cached 2 min)    |
+| `/api/docker`    | Docker storage usage (cached 30 s)            |
+
+Each dashboard card requests only its own endpoint, so fast data renders
+without waiting for the slow `du` scans.
 
 All routes require HTTP basic auth (`MONITOR_USER` / `MONITOR_PASS`).
 

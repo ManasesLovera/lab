@@ -1,554 +1,330 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Monitor</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            color: #f8fafc;
-            margin-bottom: 10px;
-        }
-        .system-info {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            font-size: 14px;
-            color: #94a3b8;
-        }
-        .system-info span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .live-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            margin-right: 8px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .card {
-            background: #1e293b;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .card h2 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-        }
-        .gauge {
-            margin-bottom: 20px;
-        }
-        .gauge:last-child {
-            margin-bottom: 0;
-        }
-        .gauge-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        .gauge-label {
-            color: #cbd5e1;
-        }
-        .gauge-value {
-            font-weight: 600;
-        }
-        .gauge-bar {
-            height: 12px;
-            background: #334155;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .gauge-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.5s ease;
-        }
-        .color-green { background: #22c55e; }
-        .color-yellow { background: #eab308; }
-        .color-orange { background: #f97316; }
-        .color-red { background: #ef4444; }
-        .folder-section {
-            margin-bottom: 24px;
-        }
-        .folder-section:last-child {
-            margin-bottom: 0;
-        }
-        .folder-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            gap: 10px;
-        }
-        .folder-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #e2e8f0;
-        }
-        .folder-size {
-            font-size: 13px;
-            color: #64748b;
-        }
-        .folder-track {
-            height: 24px;
-            background: #334155;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-        .folder-fill {
-            height: 100%;
-            background: #3b82f6;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-        .sub-bar {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-            gap: 10px;
-            padding-left: 16px;
-        }
-        .sub-name {
-            width: 120px;
-            font-size: 12px;
-            color: #94a3b8;
-            flex-shrink: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        .sub-track {
-            flex: 1;
-            height: 16px;
-            background: #1e293b;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-        .sub-fill {
-            height: 100%;
-            background: #60a5fa;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-        .sub-size {
-            width: 70px;
-            text-align: right;
-            font-size: 12px;
-            color: #64748b;
-            flex-shrink: 0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            text-align: left;
-            padding: 8px 12px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid #334155;
-        }
-        td {
-            padding: 10px 12px;
-            font-size: 13px;
-            border-bottom: 1px solid #1e293b;
-        }
-        tr:hover {
-            background: #1e293b;
-        }
-        .proc-name {
-            color: #e2e8f0;
-            font-weight: 500;
-        }
-        .proc-pid {
-            color: #64748b;
-            font-family: monospace;
-        }
-        .proc-cpu {
-            color: #f97316;
-            font-weight: 600;
-        }
-        .proc-ram {
-            color: #3b82f6;
-            font-weight: 600;
-        }
-        .full-width {
-            grid-column: 1 / -1;
-        }
-        .uptime-help {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 4px;
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            .grid {
-                grid-template-columns: 1fr;
-            }
-            .system-info {
-                gap: 15px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab Monitor</title>
+<style>
+  :root {
+    --bg: #f4f6fb; --panel: #ffffff; --card: #ffffff; --line: #e3e8f1;
+    --text: #0f172a; --muted: #5b6980; --dim: #8592a8;
+    --green: #16a34a; --yellow: #ca8a04; --orange: #ea580c; --red: #dc2626; --blue: #2563eb; --blue2: #3b82f6;
+    --hover: rgba(15,23,42,.04); --row: rgba(15,23,42,.06); --skel: #e9eef6; --skel2: #f6f8fc;
+    --active-bg: rgba(37,99,235,.09); --active-text: #1d4ed8; --track: #e8edf5;
+    --ok-bg: rgba(22,163,74,.12); --warn-bg: rgba(202,138,4,.15); --down-bg: rgba(220,38,38,.12); --down-card: #fef2f2;
+    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 4px 14px rgba(15,23,42,.04);
+    --side: 220px; color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1120; --panel: #111a2e; --card: #16213a; --line: #24324f;
+    --text: #e2e8f0; --muted: #8392ad; --dim: #5b6b88;
+    --green: #22c55e; --yellow: #eab308; --orange: #f97316; --red: #ef4444; --blue: #3b82f6; --blue2: #60a5fa;
+    --hover: rgba(255,255,255,.04); --row: rgba(255,255,255,.05); --skel: #24324f; --skel2: #2c3d5e;
+    --active-bg: rgba(59,130,246,.15); --active-text: #fff; --track: #24324f;
+    --ok-bg: rgba(34,197,94,.18); --warn-bg: rgba(234,179,8,.2); --down-bg: rgba(239,68,68,.22); --down-card: rgba(239,68,68,.07);
+    --shadow: none; color-scheme: dark;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .layout { display: grid; grid-template-columns: var(--side) 1fr; min-height: 100vh; }
+
+  /* ---------- sidebar tabs ---------- */
+  .sidebar { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 12px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 4px; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 18px; font-weight: 700; font-size: 17px; }
+  .brand i { width: 10px; height: 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--ok-bg); }
+  .tab { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 8px; color: var(--muted); font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; border: 0; background: none; text-align: left; width: 100%; }
+  .tab:hover { background: var(--hover); color: var(--text); }
+  .tab.active { background: var(--active-bg); color: var(--active-text); box-shadow: inset 3px 0 0 var(--blue); }
+  .tab .ico { width: 20px; text-align: center; font-size: 15px; }
+  .tab .badge { margin-left: auto; min-width: 20px; padding: 1px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; background: var(--track); color: var(--muted); text-align: center; }
+  .badge.ok { background: var(--ok-bg); color: var(--green); }
+  .badge.warn { background: var(--warn-bg); color: var(--yellow); }
+  .badge.down { background: var(--down-bg); color: var(--red); }
+  .side-foot { margin-top: auto; padding: 10px; font-size: 11px; color: var(--dim); }
+  .theme { margin-top: auto; }
+  .theme + .side-foot { margin-top: 0; }
+
+  /* ---------- main ---------- */
+  main { padding: 24px 28px 40px; min-width: 0; }
+  .topbar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 28px; margin-bottom: 22px; }
+  .topbar h1 { font-size: 24px; font-weight: 650; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { box-shadow: var(--shadow); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px; font-size: 12.5px; color: var(--muted); min-width: 60px; }
+  .chip b { color: var(--text); font-weight: 600; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .card { box-shadow: var(--shadow); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 { font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .card h2 small { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--dim); }
+  .big { font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+  .sub { font-size: 13px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  .bar { height: 10px; background: var(--track); border-radius: 5px; overflow: hidden; }
+  .fill { height: 100%; border-radius: 5px; transition: width .5s ease, background .3s; background: var(--green); }
+  .kv { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13.5px; border-bottom: 1px solid var(--row); }
+  .kv:last-child { border: 0; }
+  .kv span:first-child { color: var(--muted); }
+  .kv span:last-child { font-weight: 500; text-align: right; word-break: break-word; }
+  .hw { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; }
+  .hw label { display: block; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .hw div div { font-size: 13.5px; font-weight: 500; word-break: break-word; }
+
+  /* ---------- loading skeleton / errors ---------- */
+  .loading .sk, .sk.on { color: transparent !important; background: linear-gradient(90deg, var(--skel) 25%, var(--skel2) 50%, var(--skel) 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; border-radius: 4px; user-select: none; }
+  @keyframes shimmer { to { background-position: -200% 0; } }
+  .err { color: var(--red); font-size: 13px; padding: 8px 0; }
+
+  /* ---------- health ---------- */
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .sum { box-shadow: var(--shadow); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  .sum b { display: block; font-size: 28px; }
+  .sum span { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .sum.ok b { color: var(--green); } .sum.warn b { color: var(--yellow); } .sum.down b { color: var(--red); }
+  .apps { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
+  .app { box-shadow: var(--shadow); background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--green); border-radius: 10px; padding: 14px 16px; }
+  .app.warn { border-left-color: var(--yellow); } .app.down { border-left-color: var(--red); background: var(--down-card); }
+  .app .name { font-weight: 600; font-size: 14.5px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .5px; }
+  .pill.ok { background: var(--ok-bg); color: var(--green); } .pill.warn { background: var(--warn-bg); color: var(--yellow); } .pill.down { background: var(--down-bg); color: var(--red); }
+  .app .meta { font-size: 12px; color: var(--muted); margin-top: 6px; word-break: break-all; }
+
+  /* ---------- storage / processes ---------- */
+  .folder { margin-bottom: 20px; } .folder:last-child { margin: 0; }
+  .folder-h { display: flex; gap: 10px; align-items: baseline; margin-bottom: 8px; font-size: 14px; }
+  .folder-h b { font-weight: 600; } .folder-h span { color: var(--dim); font-size: 13px; }
+  .folder .bar { height: 18px; } .folder .fill { background: var(--blue); }
+  .subrow { display: flex; align-items: center; gap: 10px; margin-top: 6px; padding-left: 14px; }
+  .subrow .n { width: 130px; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .subrow .bar { flex: 1; height: 12px; } .subrow .fill { background: var(--blue2); }
+  .subrow .s { width: 70px; text-align: right; font-size: 12px; color: var(--dim); flex-shrink: 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 8px 12px; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid var(--row); }
+  tr:hover td { background: var(--hover); }
+  .mono { font-family: ui-monospace, monospace; color: var(--dim); } .c-cpu { color: var(--orange); font-weight: 600; } .c-ram { color: var(--blue2); font-weight: 600; }
+
+  /* ---------- mobile: sidebar becomes a top tab bar ---------- */
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: sticky; z-index: 5; height: auto; flex-direction: row; overflow-x: auto; padding: 8px; gap: 4px; border-right: 0; border-bottom: 1px solid var(--line); }
+    .brand, .side-foot { display: none; }
+    .theme { margin-top: 0; margin-left: auto; }
+    .tab { width: auto; white-space: nowrap; padding: 8px 12px; } .tab.active { box-shadow: inset 0 -3px 0 var(--blue); }
+    main { padding: 16px 14px 32px; }
+    .subrow .n { width: 90px; }
+  }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>System Monitor</h1>
-        <div class="system-info">
-            <span><span class="live-dot"></span><span id="hostname">Loading...</span></span>
-            <span title="How long the system has been running since last boot">⏱ <span id="uptime">--</span></span>
-            <span>🌡 <span id="temp">--</span>°C</span>
-            <span>📶 <span id="ssid">--</span></span>
-            <span>🌐 <span id="ip">--</span></span>
-        </div>
-        <div class="uptime-help">⏱ Uptime = time since last reboot</div>
+<div class="layout">
+  <nav class="sidebar" id="tabs">
+    <div class="brand"><i></i> Lab Monitor</div>
+    <a class="tab" data-tab="overview" href="#overview"><span class="ico">◧</span>Overview</a>
+    <a class="tab" data-tab="health" href="#health"><span class="ico">♥</span>App Health<span class="badge" id="health-badge">…</span></a>
+    <a class="tab" data-tab="storage" href="#storage"><span class="ico">▤</span>Storage</a>
+    <a class="tab" data-tab="processes" href="#processes"><span class="ico">≣</span>Processes</a>
+    <a class="tab" data-tab="hardware" href="#hardware"><span class="ico">⚙</span>Hardware</a>
+    <button class="tab theme" id="theme-btn" title="Toggle light / dark"><span class="ico" id="theme-ico">☾</span><span id="theme-label">Dark mode</span></button>
+    <div class="side-foot" id="last-update"></div>
+  </nav>
+
+  <main>
+    <div class="topbar">
+      <h1 id="title">Overview</h1>
+      <div class="chips" id="chips">
+        <span class="chip">host <b class="sk on" id="hostname">loading</b></span>
+        <span class="chip">up <b id="uptime">--</b></span>
+        <span class="chip">temp <b id="temp">--</b></span>
+        <span class="chip">wifi <b id="ssid">--</b></span>
+        <span class="chip">ip <b id="ip">--</b></span>
+      </div>
     </div>
 
-    <div class="grid">
-        <!-- CPU Card -->
-        <div class="card">
-            <h2>CPU</h2>
-            <div class="gauge">
-                <div class="gauge-header">
-                    <span class="gauge-label">Usage</span>
-                    <span class="gauge-value" id="cpu-percent">0%</span>
-                </div>
-                <div class="gauge-bar">
-                    <div class="gauge-fill color-green" id="cpu-bar" style="width: 0%"></div>
-                </div>
-            </div>
-            <div style="font-size: 13px; color: #64748b;">
-                <div id="cpu-cores">-- cores</div>
-                <div id="cpu-model" style="margin-top: 4px;">--</div>
-            </div>
+    <!-- OVERVIEW -->
+    <section class="panel" id="p-overview">
+      <div class="grid">
+        <div class="card loading" id="c-cpu">
+          <h2>CPU <small id="cpu-cores">-- cores</small></h2>
+          <div class="big sk" id="cpu-percent">00.0%</div>
+          <div class="bar"><div class="fill" id="cpu-bar" style="width:0"></div></div>
+          <div class="sub sk" id="cpu-model">model placeholder text</div>
         </div>
-
-        <!-- RAM Card -->
-        <div class="card">
-            <h2>Memory</h2>
-            <div class="gauge">
-                <div class="gauge-header">
-                    <span class="gauge-label">Usage</span>
-                    <span class="gauge-value" id="ram-percent">0%</span>
-                </div>
-                <div class="gauge-bar">
-                    <div class="gauge-fill color-green" id="ram-bar" style="width: 0%"></div>
-                </div>
-            </div>
-            <div style="font-size: 13px; color: #64748b;">
-                <span id="ram-used">--</span> / <span id="ram-total">--</span>
-                <span style="margin-left: 10px;">(<span id="ram-available">--</span> available)</span>
-            </div>
+        <div class="card loading" id="c-mem">
+          <h2>Memory</h2>
+          <div class="big sk" id="ram-percent">00.0%</div>
+          <div class="bar"><div class="fill" id="ram-bar" style="width:0"></div></div>
+          <div class="sub sk" id="ram-detail">0.0 GB / 0.0 GB (0.0 GB available)</div>
         </div>
-
-        <!-- Disk Card -->
-        <div class="card">
-            <h2>Disk</h2>
-            <div class="gauge">
-                <div class="gauge-header">
-                    <span class="gauge-label">Usage</span>
-                    <span class="gauge-value" id="disk-percent">0%</span>
-                </div>
-                <div class="gauge-bar">
-                    <div class="gauge-fill color-green" id="disk-bar" style="width: 0%"></div>
-                </div>
-            </div>
-            <div style="font-size: 13px; color: #64748b;">
-                <span id="disk-used">--</span> / <span id="disk-total">--</span>
-                <span style="margin-left: 10px;">(<span id="disk-available">--</span> free)</span>
-            </div>
+        <div class="card loading" id="c-disk">
+          <h2>Disk</h2>
+          <div class="big sk" id="disk-percent">00.0%</div>
+          <div class="bar"><div class="fill" id="disk-bar" style="width:0"></div></div>
+          <div class="sub sk" id="disk-detail">0.0 GB / 0.0 GB (0.0 GB free)</div>
         </div>
+      </div>
+    </section>
 
-        <!-- Docker Card -->
-        <div class="card">
-            <h2>Docker Storage</h2>
-            <div style="font-size: 13px; color: #64748b; margin-bottom: 12px;">
-                <span id="docker-total">--</span> total
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94a3b8;">Images</span>
-                    <span id="docker-images" style="color: #e2e8f0; font-weight: 500;">--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94a3b8;">Containers</span>
-                    <span id="docker-containers" style="color: #e2e8f0; font-weight: 500;">--</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: #94a3b8;">Volumes</span>
-                    <span id="docker-volumes" style="color: #e2e8f0; font-weight: 500;">--</span>
-                </div>
-            </div>
+    <!-- HEALTH -->
+    <section class="panel" id="p-health">
+      <div class="summary">
+        <div class="sum ok"><b id="h-ok">–</b><span>Healthy</span></div>
+        <div class="sum warn"><b id="h-warn">–</b><span>Degraded</span></div>
+        <div class="sum down"><b id="h-down">–</b><span>Down</span></div>
+      </div>
+      <div class="err" id="h-err"></div>
+      <div class="apps" id="apps"><div class="card loading"><div class="sk">Loading container health…</div></div></div>
+    </section>
+
+    <!-- STORAGE -->
+    <section class="panel" id="p-storage">
+      <div class="grid">
+        <div class="card loading" id="c-docker">
+          <h2>Docker storage <small class="sk" id="docker-total">0.0 GB</small></h2>
+          <div class="kv"><span>Images</span><span class="sk" id="docker-images">0.0 GB</span></div>
+          <div class="kv"><span>Containers</span><span class="sk" id="docker-containers">0.0 GB</span></div>
+          <div class="kv"><span>Volumes</span><span class="sk" id="docker-volumes">0.0 GB</span></div>
         </div>
-
-        <!-- Hardware Card -->
-        <div class="card full-width">
-            <h2>Hardware</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Board</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-board">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Platform</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-platform">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Kernel</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-kernel">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Arch</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-arch">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Serial</div>
-                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500; font-family: monospace;" id="hw-serial">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Revision</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-revision">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">GPU Memory</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-gpu">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Firmware</div>
-                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500;" id="hw-firmware">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">USB Devices</div>
-                    <div style="font-size: 13px; color: #e2e8f0; font-weight: 500;" id="hw-usb">--</div>
-                </div>
-                <div>
-                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Ethernet MAC</div>
-                    <div style="font-size: 12px; color: #e2e8f0; font-weight: 500; font-family: monospace;" id="hw-ether">--</div>
-                </div>
-            </div>
+        <div class="card wide loading" id="c-folders">
+          <h2>Disk distribution <small>scanning can take a while…</small></h2>
+          <div id="folder-bars"><div class="sk">Scanning folders…<br>Scanning folders…<br>Scanning folders…</div></div>
         </div>
+      </div>
+    </section>
 
-        <!-- Disk Distribution Card -->
-        <div class="card full-width">
-            <h2>Disk Distribution</h2>
-            <div id="folder-bars"></div>
-        </div>
+    <!-- PROCESSES -->
+    <section class="panel" id="p-processes">
+      <div class="card">
+        <h2>Top processes</h2>
+        <table><thead><tr><th>PID</th><th>Name</th><th>CPU %</th><th>RAM %</th></tr></thead>
+          <tbody id="process-table"><tr><td colspan="4" class="sk on">loading</td></tr></tbody></table>
+      </div>
+    </section>
 
-        <!-- Processes Card -->
-        <div class="card full-width">
-            <h2>Top Processes</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>PID</th>
-                        <th>Name</th>
-                        <th>CPU %</th>
-                        <th>RAM %</th>
-                    </tr>
-                </thead>
-                <tbody id="process-table"></tbody>
-            </table>
-        </div>
-    </div>
+    <!-- HARDWARE -->
+    <section class="panel" id="p-hardware">
+      <div class="card loading" id="c-hw">
+        <h2>Hardware</h2>
+        <div class="hw" id="hw"></div>
+      </div>
+    </section>
+  </main>
+</div>
 
-    <script>
-        function formatBytes(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-        }
+<script>
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $('theme-ico').textContent = t === 'dark' ? '☀' : '☾';
+  $('theme-label').textContent = t === 'dark' ? 'Light mode' : 'Dark mode';
+  try { localStorage.setItem('monitor-theme', t); } catch (e) {}
+}
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = b => { if (!b) return '0 B'; const u=['B','KB','MB','GB','TB'], i=Math.min(Math.floor(Math.log(b)/Math.log(1024)),4); return (+(b/1024**i).toFixed(1))+' '+u[i]; };
+const level = p => p < 50 ? 'var(--green)' : p < 75 ? 'var(--yellow)' : p < 90 ? 'var(--orange)' : 'var(--red)';
 
-        function getColor(percent) {
-            if (percent < 50) return 'color-green';
-            if (percent < 75) return 'color-yellow';
-            if (percent < 90) return 'color-orange';
-            return 'color-red';
-        }
+function gauge(prefix, pct) {
+  $(prefix+'-percent').textContent = pct.toFixed(1)+'%';
+  const bar = $(prefix+'-bar'); bar.style.width = pct+'%'; bar.style.background = level(pct);
+}
+const ready = el => { el.classList.remove('loading'); el.querySelectorAll('.sk').forEach(n => n.classList.remove('sk','on')); };
+const markUpdated = () => { $('last-update').textContent = 'updated ' + new Date().toLocaleTimeString(); };
 
-        function updateGauge(barId, percentId, percent) {
-            const bar = document.getElementById(barId);
-            const label = document.getElementById(percentId);
-            bar.style.width = percent + '%';
-            bar.className = 'gauge-fill ' + getColor(percent);
-            label.textContent = percent.toFixed(1) + '%';
-        }
+/* ---- one loader per data source; each renders as soon as ITS response lands ---- */
+const loaders = {
+  overview: d => {
+    $('hostname').textContent = d.hostname; $('uptime').textContent = d.uptime;
+    $('temp').textContent = d.temp ? d.temp.toFixed(1)+'°C' : 'N/A';
+    $('ssid').textContent = d.network.ssid || 'N/A'; $('ip').textContent = d.network.ip || 'N/A';
+    $('hostname').classList.remove('sk','on');
+  },
+  cpu: d => { gauge('cpu', d.percent); $('cpu-cores').textContent = d.cores+' cores'; $('cpu-model').textContent = d.model; ready($('c-cpu')); },
+  memory: d => { gauge('ram', d.percent); $('ram-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} available)`; ready($('c-mem')); },
+  disk: d => { gauge('disk', d.percent); $('disk-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} free)`; ready($('c-disk')); },
+  docker: d => {
+    $('docker-total').textContent = fmt(d.total)+' total';
+    $('docker-images').textContent = fmt(d.images); $('docker-containers').textContent = fmt(d.containers); $('docker-volumes').textContent = fmt(d.volumes);
+    ready($('c-docker'));
+  },
+  folders: folders => {
+    folders = folders || [];
+    const max = Math.max(1, ...folders.map(f => f.size));
+    $('folder-bars').innerHTML = folders.map(f => {
+      const subs = f.subs || [], smax = Math.max(1, ...subs.map(s => s.size));
+      return `<div class="folder"><div class="folder-h"><b>/${esc(f.path)}</b><span>${fmt(f.size)}</span></div>
+        <div class="bar"><div class="fill" style="width:${(f.size/max*100).toFixed(1)}%"></div></div>
+        ${subs.map(s => `<div class="subrow"><span class="n" title="${esc(s.path)}">${esc(s.path)}</span><div class="bar"><div class="fill" style="width:${(s.size/smax*100).toFixed(1)}%"></div></div><span class="s">${fmt(s.size)}</span></div>`).join('')}</div>`;
+    }).join('') || '<div class="sub">No data</div>';
+    $('c-folders').querySelector('h2 small').textContent = 'cached 2 min';
+    ready($('c-folders'));
+  },
+  processes: ps => {
+    $('process-table').innerHTML = (ps || []).map(p => `<tr><td class="mono">${p.pid}</td><td>${esc(p.name)}</td><td class="c-cpu">${p.cpu.toFixed(1)}%</td><td class="c-ram">${p.ram.toFixed(1)}%</td></tr>`).join('');
+  },
+  hardware: h => {
+    const f = [['Board',h.board],['Platform',h.platform],['Kernel',h.kernel],['Arch',h.arch],['Serial',h.serial],['Revision',h.revision],['GPU memory',h.gpu],['Firmware',h.firmware],['USB',h.usb],['Ethernet MAC',h.ethernet]];
+    $('hw').innerHTML = f.map(([k,v]) => `<div><label>${k}</label><div>${esc(v) || '—'}</div></div>`).join('');
+    ready($('c-hw'));
+  },
+  health: r => {
+    $('h-ok').textContent = r.ok; $('h-warn').textContent = r.warn; $('h-down').textContent = r.down;
+    $('h-err').textContent = r.error || '';
+    $('apps').innerHTML = r.apps.map(a => `<div class="app ${a.level}">
+      <div class="name"><span>${esc(a.name)}</span><span class="pill ${a.level}">${esc(a.summary)}</span></div>
+      <div class="meta">${esc(a.status)}</div><div class="meta">${esc(a.image)}</div></div>`).join('') || '<div class="sub">No containers found</div>';
+    const b = $('health-badge');
+    b.className = 'badge ' + (r.down ? 'down' : r.warn ? 'warn' : 'ok');
+    b.textContent = r.down ? r.down+' down' : r.warn ? r.warn+' warn' : 'OK';
+  },
+};
 
-        function updateFolderBars(folders) {
-            const container = document.getElementById('folder-bars');
-            const maxSize = Math.max(...folders.map(f => f.size));
-            
-            container.innerHTML = folders.map(folder => {
-                const width = (folder.size / maxSize * 100).toFixed(1);
-                
-                let subsHtml = '';
-                if (folder.subs && folder.subs.length > 0) {
-                    const maxSubSize = Math.max(...folder.subs.map(s => s.size));
-                    subsHtml = '<div class="subs-container">' + folder.subs.map(sub => {
-                        const subWidth = (sub.size / maxSubSize * 100).toFixed(1);
-                        return `
-                            <div class="sub-bar">
-                                <span class="sub-name">${sub.path}</span>
-                                <div class="sub-track">
-                                    <div class="sub-fill" style="width: ${subWidth}%"></div>
-                                </div>
-                                <span class="sub-size">${formatBytes(sub.size)}</span>
-                            </div>
-                        `;
-                    }).join('') + '</div>';
-                }
-                
-                return `
-                    <div class="folder-section">
-                        <div class="folder-header">
-                            <span class="folder-name">/${folder.path}</span>
-                            <span class="folder-size">${formatBytes(folder.size)}</span>
-                        </div>
-                        <div class="folder-track">
-                            <div class="folder-fill" style="width: ${width}%"></div>
-                        </div>
-                        ${subsHtml}
-                    </div>
-                `;
-            }).join('');
-        }
+/* ---- which sources each tab needs, and how often to refresh (ms; 0 = once) ---- */
+const tabs = {
+  overview:  { title: 'Overview',   src: { cpu: 3000, memory: 3000, disk: 15000 } },
+  health:    { title: 'App Health', src: { health: 15000 } },
+  storage:   { title: 'Storage',    src: { docker: 30000, folders: 120000 } },
+  processes: { title: 'Processes',  src: { processes: 5000 } },
+  hardware:  { title: 'Hardware',   src: { hardware: 0 } },
+};
+const global = { overview: 10000, health: 15000 }; // always fresh: header chips + sidebar badge
 
-        function updateProcessTable(procs) {
-            const tbody = document.getElementById('process-table');
-            tbody.innerHTML = procs.map(p => `
-                <tr>
-                    <td class="proc-pid">${p.pid}</td>
-                    <td class="proc-name">${p.name}</td>
-                    <td class="proc-cpu">${p.cpu.toFixed(1)}%</td>
-                    <td class="proc-ram">${p.ram.toFixed(1)}%</td>
-                </tr>
-            `).join('');
-        }
+const timers = {};
+async function load(name) {
+  try {
+    const res = await fetch('/api/' + name, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status);
+    loaders[name](await res.json()); markUpdated();
+  } catch (e) {
+    console.error(name, e);
+  }
+}
+function poll(name, every) {
+  if (timers[name]) return;
+  load(name);
+  if (every) timers[name] = setInterval(() => { if (!document.hidden) load(name); }, every);
+  else timers[name] = 'once';
+}
+function stop(name) { if (timers[name] && timers[name] !== 'once') clearInterval(timers[name]); delete timers[name]; }
 
-        function updateDashboard(data) {
-            // System info
-            document.getElementById('hostname').textContent = data.hostname;
-            document.getElementById('uptime').textContent = data.uptime;
-            document.getElementById('temp').textContent = data.temp.toFixed(1);
-            document.getElementById('ssid').textContent = data.network.ssid || 'N/A';
-            document.getElementById('ip').textContent = data.network.ip || 'N/A';
+let current;
+function show(name) {
+  if (!tabs[name]) name = 'overview';
+  if (current) Object.keys(tabs[current].src).forEach(s => { if (!(s in global) && s !== 'hardware') stop(s); });
+  current = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'p-' + name));
+  $('title').textContent = tabs[name].title;
+  // Fire every request for this tab at once; each card renders when its own data arrives.
+  Object.entries(tabs[name].src).forEach(([s, every]) => poll(s, global[s] || every));
+}
 
-            // CPU
-            updateGauge('cpu-bar', 'cpu-percent', data.cpu.percent);
-            document.getElementById('cpu-cores').textContent = data.cpu.cores + ' cores';
-            document.getElementById('cpu-model').textContent = data.cpu.model;
-
-            // RAM
-            updateGauge('ram-bar', 'ram-percent', data.ram.percent);
-            document.getElementById('ram-used').textContent = formatBytes(data.ram.used);
-            document.getElementById('ram-total').textContent = formatBytes(data.ram.total);
-            document.getElementById('ram-available').textContent = formatBytes(data.ram.available);
-
-            // Disk
-            updateGauge('disk-bar', 'disk-percent', data.disk.percent);
-            document.getElementById('disk-used').textContent = formatBytes(data.disk.used);
-            document.getElementById('disk-total').textContent = formatBytes(data.disk.total);
-            document.getElementById('disk-available').textContent = formatBytes(data.disk.available);
-
-            // Docker
-            document.getElementById('docker-total').textContent = formatBytes(data.disk.docker.total);
-            document.getElementById('docker-images').textContent = formatBytes(data.disk.docker.images);
-            document.getElementById('docker-containers').textContent = formatBytes(data.disk.docker.containers);
-            document.getElementById('docker-volumes').textContent = formatBytes(data.disk.docker.volumes);
-
-            // Hardware
-            document.getElementById('hw-board').textContent = data.hardware.board;
-            document.getElementById('hw-platform').textContent = data.hardware.platform;
-            document.getElementById('hw-kernel').textContent = data.hardware.kernel;
-            document.getElementById('hw-arch').textContent = data.hardware.arch;
-            document.getElementById('hw-serial').textContent = data.hardware.serial;
-            document.getElementById('hw-revision').textContent = data.hardware.revision;
-            document.getElementById('hw-gpu').textContent = data.hardware.gpu;
-            document.getElementById('hw-firmware').textContent = data.hardware.firmware;
-            document.getElementById('hw-usb').textContent = data.hardware.usb;
-            document.getElementById('hw-ether').textContent = data.hardware.ethernet;
-
-            // Folders
-            updateFolderBars(data.disk.folders);
-
-            // Processes
-            updateProcessTable(data.processes);
-        }
-
-        // Use SSE for live streaming
-        const eventSource = new EventSource('/api/stream');
-        
-        eventSource.onmessage = function(event) {
-            try {
-                const data = JSON.parse(event.data);
-                updateDashboard(data);
-            } catch (err) {
-                console.error('Failed to parse SSE data:', err);
-            }
-        };
-
-        eventSource.onerror = function(err) {
-            console.error('SSE connection error:', err);
-            // Fallback to polling if SSE fails
-            setTimeout(() => {
-                fetch('/api/stats')
-                    .then(res => res.json())
-                    .then(data => updateDashboard(data))
-                    .catch(err => console.error('Fallback fetch failed:', err));
-            }, 5000);
-        };
-
-        // Initial fetch as backup
-        fetch('/api/stats')
-            .then(res => res.json())
-            .then(data => updateDashboard(data))
-            .catch(err => console.error('Initial fetch failed:', err));
-    </script>
+let saved = null; try { saved = localStorage.getItem('monitor-theme'); } catch (e) {}
+setTheme(saved || 'light');
+$('theme-btn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { Object.keys(timers).forEach(load); } });
+Object.entries(global).forEach(([s, every]) => poll(s, every));
+show(location.hash.slice(1));
+</script>
 </body>
 </html>

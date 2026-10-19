@@ -9,7 +9,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o monitor .
 # Final stage
 FROM alpine:3.20
 # coreutils/findutils: GNU du (-b) and find. docker-cli: `docker system df`.
-RUN apk --no-cache add ca-certificates coreutils findutils docker-cli
+# wpa_supplicant: provides wpa_cli, used to read the host Wi-Fi SSID/IP.
+RUN apk --no-cache add ca-certificates coreutils findutils docker-cli wpa_supplicant
 WORKDIR /app
 COPY --from=builder /app/monitor .
 EXPOSE 8080

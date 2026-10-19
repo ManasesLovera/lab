@@ -181,11 +181,12 @@ func getDiskUsage() DiskStats {
 type AppHealth struct {
 	Name    string `json:"name"`
 	Image   string `json:"image"`
-	State   string `json:"state"`   // docker state: running, exited, restarting...
-	Health  string `json:"health"`  // healthy, unhealthy, starting, none
-	Status  string `json:"status"`  // docker's human status ("Up 2 days (healthy)")
-	Level   string `json:"level"`   // ok, warn, down
-	Summary string `json:"summary"` // short reason shown in the UI
+	State   string `json:"state"`         // docker state: running, exited, restarting...
+	Health  string `json:"health"`        // healthy, unhealthy, starting, none
+	Status  string `json:"status"`        // docker's human status ("Up 2 days (healthy)")
+	URL     string `json:"url,omitempty"` // public link, when the proxy exposes this app
+	Level   string `json:"level"`         // ok, warn, down
+	Summary string `json:"summary"`       // short reason shown in the UI
 }
 
 type HealthReport struct {
@@ -195,6 +196,33 @@ type HealthReport struct {
 	Down    int         `json:"down"`
 	Error   string      `json:"error,omitempty"`
 	Checked string      `json:"checked"`
+}
+
+// publicHosts returns the public hostnames declared in the lab proxy config
+// (server_name entries), excluding the catch-all and the *.local LAN names.
+// Read per request so new services show up without restarting the monitor.
+func publicHosts() map[string]bool {
+	path := os.Getenv("PROXY_CONF")
+	if path == "" {
+		path = hostPath("/home/mlovera/lab/core/proxy/conf.d/proxy.conf")
+	}
+	hosts := map[string]bool{}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return hosts
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		line = strings.TrimSpace(line)
+		if !strings.HasPrefix(line, "server_name") {
+			continue
+		}
+		for _, h := range strings.Fields(strings.TrimSuffix(strings.TrimPrefix(line, "server_name"), ";")) {
+			if strings.Contains(h, ".") && !strings.HasSuffix(h, ".local") {
+				hosts[h] = true
+			}
+		}
+	}
+	return hosts
 }
 
 func getHealth() HealthReport {
@@ -209,6 +237,7 @@ func getHealth() HealthReport {
 		return rep
 	}
 
+	hosts := publicHosts()
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		f := strings.Split(line, "\t")
 		if len(f) < 4 {
@@ -237,6 +266,14 @@ func getHealth() HealthReport {
 			a.Level, a.Summary = "ok", "healthy"
 		default:
 			a.Level, a.Summary = "ok", "running (no healthcheck)"
+		}
+
+		// Link convention: container "x" is served at x.<public domain>.
+		for h := range hosts {
+			if strings.HasPrefix(h, a.Name+".") && !strings.Contains(strings.TrimPrefix(h, a.Name+"."), ".rpi") {
+				a.URL = "https://" + h
+				break
+			}
 		}
 
 		switch a.Level {
@@ -568,7 +605,15 @@ func getNetworkInfo() NetStats {
 	net := NetStats{}
 
 	// Get SSID
-	cmd := exec.Command("wpa_cli", "-i", "wlan0", "status")
+	args := []string{"-i", "wlan0", "status"}
+	if hostRoot != "" {
+		// In a container the host daemon must be able to reach our client socket,
+		// so create it inside the shared wpa_supplicant directory.
+		args = append([]string{"-s", "/var/run/wpa_supplicant"}, args...)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "wpa_cli", args...)
 	if out, err := cmd.Output(); err == nil {
 		for _, line := range strings.Split(string(out), "\n") {
 			if strings.HasPrefix(line, "ssid=") {

@@ -87,6 +87,8 @@
   .app .name { font-weight: 600; font-size: 14.5px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
   .pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 10px; text-transform: uppercase; letter-spacing: .5px; }
   .pill.ok { background: var(--ok-bg); color: var(--green); } .pill.warn { background: var(--warn-bg); color: var(--yellow); } .pill.down { background: var(--down-bg); color: var(--red); }
+  .app .link { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--blue); text-decoration: none; word-break: break-all; }
+  .app .link:hover { text-decoration: underline; }
   .app .meta { font-size: 12px; color: var(--muted); margin-top: 6px; word-break: break-all; }
 
   /* ---------- storage / processes ---------- */
@@ -271,6 +273,7 @@ const loaders = {
     $('h-err').textContent = r.error || '';
     $('apps').innerHTML = r.apps.map(a => `<div class="app ${a.level}">
       <div class="name"><span>${esc(a.name)}</span><span class="pill ${a.level}">${esc(a.summary)}</span></div>
+      ${a.url ? `<a class="link" href="${esc(a.url)}" target="_blank" rel="noopener">↗ ${esc(a.url.replace('https://',''))}</a>` : ''}
       <div class="meta">${esc(a.status)}</div><div class="meta">${esc(a.image)}</div></div>`).join('') || '<div class="sub">No containers found</div>';
     const b = $('health-badge');
     b.className = 'badge ' + (r.down ? 'down' : r.warn ? 'warn' : 'ok');

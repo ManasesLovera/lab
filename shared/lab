@@ -114,25 +114,39 @@ cmd_ps() {
   local projects=($(get_projects))
   local found_any=false
   local host_ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+  local ts_ip=$(tailscale ip -4 2>/dev/null | head -n1)
+  local running_projs=()
 
   for item in "${projects[@]}"; do
     local name="${item%%:*}"
     local path="${item#*:}"
-    
+
     # Check if there are any running containers for this compose file
     local container_ids=$(cd -P "$path" && docker compose -p "$name" ps -q 2>/dev/null)
-    
+
     if [ -n "$container_ids" ]; then
+      running_projs+=("$name")
       printf "  ${GREEN}● %-15s${NC} (Running)\n" "$name"
       found_any=true
       
       # Show HTTP routes from nginx config (only for proxy project)
+      # Only list routes whose upstream project is actually running
       if [ "$name" = "proxy" ] && [ -f "$LAB_DIR/core/proxy/conf.d/proxy.conf" ]; then
         local hosts=$(grep -oP 'server_name\s+\K[^;]+' "$LAB_DIR/core/proxy/conf.d/proxy.conf" | grep -v '^_$')
         for line in $hosts; do
           for h in $line; do
             h=$(echo "$h" | xargs)
             [ -z "$h" ] && continue
+            # Route subdomain must match a running project to be shown
+            local sub="${h%%.*}"
+            local is_running=false
+            for rp in "${running_projs[@]}"; do
+              if [ "$rp" = "$sub" ]; then
+                is_running=true
+                break
+              fi
+            done
+            [ "$is_running" = false ] && continue
             if [[ "$h" == *".rpi.local" ]]; then
               echo -e "      ${GRAY}→ Local Net:   ${NC}http://$h"
             elif [[ "$h" == *".mlovera.dev" ]]; then
@@ -141,13 +155,18 @@ cmd_ps() {
           done
         done
       fi
-      
+
       # Show host IP:port mappings for each container in this project
       for id in $container_ids; do
         local ports=$(docker port "$id" 2>/dev/null | grep -oP '0\.0\.0\.0:\d+' | sort -u)
         for p in $ports; do
           local port=${p#*:}
-          echo -e "      ${GRAY}→ IP:Port:    ${NC}${host_ip}:${port}"
+          if [ -n "$host_ip" ]; then
+            echo -e "      ${GRAY}→ LAN:        ${NC}${host_ip}:${port}"
+          fi
+          if [ -n "$ts_ip" ]; then
+            echo -e "      ${GRAY}→ Tailscale:  ${NC}${ts_ip}:${port}"
+          fi
         done
       done
     elif [ "$show_all" = true ]; then

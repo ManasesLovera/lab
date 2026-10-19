@@ -198,6 +198,12 @@
     <!-- STORAGE -->
     <section class="panel" id="p-storage">
       <div class="grid">
+        <div class="card loading" id="c-storage-disk">
+          <h2>Disk usage</h2>
+          <div class="big sk" id="storage-disk-percent">00.0%</div>
+          <div class="bar"><div class="fill" id="storage-disk-bar" style="width:0"></div></div>
+          <div class="sub sk" id="storage-disk-detail">0.0 GB / 0.0 GB (0.0 GB free)</div>
+        </div>
         <div class="card loading" id="c-docker">
           <h2>Docker storage <small class="sk" id="docker-total">0.0 GB</small></h2>
           <div class="kv"><span>Images</span><span class="sk" id="docker-images">0.0 GB</span></div>
@@ -259,7 +265,12 @@ const loaders = {
   },
   cpu: d => { gauge('cpu', d.percent); $('cpu-cores').textContent = d.cores+' cores'; $('cpu-model').textContent = d.model; ready($('c-cpu')); },
   memory: d => { gauge('ram', d.percent); $('ram-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} available)`; ready($('c-mem')); },
-  disk: d => { gauge('disk', d.percent); $('disk-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} free)`; ready($('c-disk')); },
+  disk: d => {
+    gauge('disk', d.percent); $('disk-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} free)`; ready($('c-disk'));
+    if ($('c-storage-disk')) {
+      gauge('storage-disk', d.percent); $('storage-disk-detail').textContent = `${fmt(d.used)} / ${fmt(d.total)} (${fmt(d.available)} free)`; ready($('c-storage-disk'));
+    }
+  },
   docker: d => {
     $('docker-total').textContent = fmt(d.total)+' total';
     $('docker-images').textContent = fmt(d.images); $('docker-containers').textContent = fmt(d.containers); $('docker-volumes').textContent = fmt(d.volumes);
@@ -349,7 +360,7 @@ function renderApps() {
 const tabs = {
   overview:  { title: 'Overview',   src: { cpu: 3000, memory: 3000, disk: 15000 } },
   health:    { title: 'App Health', src: { health: 15000, uptime: 15000 } },
-  storage:   { title: 'Storage',    src: { docker: 30000, folders: 120000 } },
+  storage:   { title: 'Storage',    src: { disk: 15000, docker: 30000, folders: 120000 } },
   processes: { title: 'Processes',  src: { processes: 5000 } },
   hardware:  { title: 'Hardware',   src: { hardware: 0 } },
 };

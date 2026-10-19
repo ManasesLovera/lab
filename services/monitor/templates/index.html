@@ -90,6 +90,15 @@
   .app .link { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--blue); text-decoration: none; word-break: break-all; }
   .app .link:hover { text-decoration: underline; }
   .app .meta { font-size: 12px; color: var(--muted); margin-top: 6px; word-break: break-all; }
+  .app .upt { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .app .upt .u { font-size: 11px; color: var(--muted); background: var(--line); border-radius: 6px; padding: 2px 7px; font-variant-numeric: tabular-nums; }
+  .app .upt .u b { font-weight: 700; color: var(--dim); }
+  .app .upt .u.ok b { color: var(--green); } .app .upt .u.warn b { color: var(--yellow); } .app .upt .u.down b { color: var(--red); }
+  .app .upt .u.down { background: var(--down-bg); }
+  .app .spark { display: flex; height: 7px; border-radius: 4px; overflow: hidden; background: var(--line); margin-top: 10px; }
+  .app .spark i { display: block; height: 100%; }
+  .app .spark i.up { background: var(--green); } .app .spark i.down { background: var(--red); }
+  .app .spark.empty { opacity: .35; }
 
   /* ---------- storage / processes ---------- */
   .folder { margin-bottom: 20px; } .folder:last-child { margin: 0; }
@@ -100,6 +109,12 @@
   .subrow .n { width: 130px; font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
   .subrow .bar { flex: 1; height: 12px; } .subrow .fill { background: var(--blue2); }
   .subrow .s { width: 70px; text-align: right; font-size: 12px; color: var(--dim); flex-shrink: 0; }
+  .subrow.subrow-nested { padding-left: 28px; margin-top: 4px; }
+  .subrow.subrow-nested .n { width: 116px; font-size: 11.5px; color: var(--dim); }
+  .subrow.subrow-nested .tree-branch { color: var(--dim); font-family: monospace; margin-right: 3px; }
+  .subrow.subrow-nested .bar { height: 9px; }
+  .subrow.subrow-nested .fill { background: var(--blue2); opacity: 0.8; }
+  .subrow.subrow-nested .s { font-size: 11.5px; }
   table { width: 100%; border-collapse: collapse; }
   th { text-align: left; padding: 8px 12px; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--line); }
   td { padding: 9px 12px; font-size: 13px; border-bottom: 1px solid var(--row); }
@@ -115,6 +130,8 @@
     .tab { width: auto; white-space: nowrap; padding: 8px 12px; } .tab.active { box-shadow: inset 0 -3px 0 var(--blue); }
     main { padding: 16px 14px 32px; }
     .subrow .n { width: 90px; }
+    .subrow.subrow-nested { padding-left: 24px; }
+    .subrow.subrow-nested .n { width: 80px; }
   }
 </style>
 </head>
@@ -255,7 +272,20 @@ const loaders = {
       const subs = f.subs || [], smax = Math.max(1, ...subs.map(s => s.size));
       return `<div class="folder"><div class="folder-h"><b>/${esc(f.path)}</b><span>${fmt(f.size)}</span></div>
         <div class="bar"><div class="fill" style="width:${(f.size/max*100).toFixed(1)}%"></div></div>
-        ${subs.map(s => `<div class="subrow"><span class="n" title="${esc(s.path)}">${esc(s.path)}</span><div class="bar"><div class="fill" style="width:${(s.size/smax*100).toFixed(1)}%"></div></div><span class="s">${fmt(s.size)}</span></div>`).join('')}</div>`;
+        ${subs.map(s => {
+          const children = s.subs || [];
+          const cmax = s.size || Math.max(1, ...children.map(c => c.size));
+          let html = `<div class="subrow"><span class="n" title="${esc(s.path)}">${esc(s.path)}</span><div class="bar"><div class="fill" style="width:${(s.size/smax*100).toFixed(1)}%"></div></div><span class="s">${fmt(s.size)}</span></div>`;
+          if (children.length > 0) {
+            html += children.map(c => `
+              <div class="subrow subrow-nested">
+                <span class="n" title="${esc(s.path)}/${esc(c.path)}"><span class="tree-branch">↳</span> ${esc(c.path)}</span>
+                <div class="bar"><div class="fill" style="width:${(c.size/cmax*100).toFixed(1)}%"></div></div>
+                <span class="s">${fmt(c.size)}</span>
+              </div>`).join('');
+          }
+          return html;
+        }).join('')}</div>`;
     }).join('') || '<div class="sub">No data</div>';
     $('c-folders').querySelector('h2 small').textContent = 'cached 2 min';
     ready($('c-folders'));
@@ -269,22 +299,56 @@ const loaders = {
     ready($('c-hw'));
   },
   health: r => {
+    lastHealth = r;
     $('h-ok').textContent = r.ok; $('h-warn').textContent = r.warn; $('h-down').textContent = r.down;
     $('h-err').textContent = r.error || '';
-    $('apps').innerHTML = r.apps.map(a => `<div class="app ${a.level}">
+    renderApps();
+  },
+  uptime: r => { lastSeries = r; renderApps(); },
+};
+
+let lastHealth = null, lastSeries = null;
+const pctText = v => v == null ? '–' : (v >= 99.95 ? '100' : v.toFixed(2)) + '%';
+const uptimeClass = v => v == null ? '' : v >= 99 ? 'ok' : v >= 95 ? 'warn' : 'down';
+
+function renderApps() {
+  if (!lastHealth) return;
+  const series = {};
+  ((lastSeries && lastSeries.apps) || []).forEach(a => { series[a.name] = a.segments; });
+  const now = lastSeries ? lastSeries.to : Date.now() / 1000;
+  const from = lastSeries ? lastSeries.from : now;
+  const total = Math.max(1, now - from);
+
+  $('apps').innerHTML = lastHealth.apps.map(a => {
+    const u = a.uptime || {};
+    const segs = series[a.name] || [];
+    const spark = segs.length
+      ? `<div class="spark" title="availability, last 24h">${segs.map(s => `<i class="${s.up ? 'up' : 'down'}" style="width:${((s.end - s.start) / total * 100).toFixed(2)}%"></i>`).join('')}</div>`
+      : `<div class="spark empty" title="no history yet"></div>`;
+    const since = u.lastChange ? ` title="last state change ${new Date(u.lastChange).toLocaleString()}"` : '';
+    return `<div class="app ${a.level}">
       <div class="name"><span>${esc(a.name)}</span><span class="pill ${a.level}">${esc(a.summary)}</span></div>
       ${a.url ? `<a class="link" href="${esc(a.url)}" target="_blank" rel="noopener">↗ ${esc(a.url.replace('https://',''))}</a>` : ''}
-      <div class="meta">${esc(a.status)}</div><div class="meta">${esc(a.image)}</div></div>`).join('') || '<div class="sub">No containers found</div>';
-    const b = $('health-badge');
-    b.className = 'badge ' + (r.down ? 'down' : r.warn ? 'warn' : 'ok');
-    b.textContent = r.down ? r.down+' down' : r.warn ? r.warn+' warn' : 'OK';
-  },
-};
+      <div class="meta">${esc(a.status)}</div><div class="meta">${esc(a.image)}</div>
+      <div class="upt"${since}>
+        <span class="u ${uptimeClass(u['24h'])}"><b>${pctText(u['24h'])}</b> 24h</span>
+        <span class="u ${uptimeClass(u['7d'])}"><b>${pctText(u['7d'])}</b> 7d</span>
+        <span class="u ${uptimeClass(u['30d'])}"><b>${pctText(u['30d'])}</b> 30d</span>
+        ${u.restarts24h ? `<span class="u down"><b>${u.restarts24h}</b> restart${u.restarts24h === 1 ? '' : 's'}</span>` : ''}
+      </div>
+      ${spark}
+    </div>`;
+  }).join('') || '<div class="sub">No containers found</div>';
+
+  const b = $('health-badge');
+  b.className = 'badge ' + (lastHealth.down ? 'down' : lastHealth.warn ? 'warn' : 'ok');
+  b.textContent = lastHealth.down ? lastHealth.down+' down' : lastHealth.warn ? lastHealth.warn+' warn' : 'OK';
+}
 
 /* ---- which sources each tab needs, and how often to refresh (ms; 0 = once) ---- */
 const tabs = {
   overview:  { title: 'Overview',   src: { cpu: 3000, memory: 3000, disk: 15000 } },
-  health:    { title: 'App Health', src: { health: 15000 } },
+  health:    { title: 'App Health', src: { health: 15000, uptime: 15000 } },
   storage:   { title: 'Storage',    src: { docker: 30000, folders: 120000 } },
   processes: { title: 'Processes',  src: { processes: 5000 } },
   hardware:  { title: 'Hardware',   src: { hardware: 0 } },

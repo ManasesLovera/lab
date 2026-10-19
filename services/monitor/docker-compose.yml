@@ -13,6 +13,8 @@ services:
       HOST_PROC: /host/proc
       HOST_SYS: /host/sys
       HOST_ETC: /host/etc
+      # Persist the availability transition ledger across restarts.
+      UPTIME_DIR: /data
     volumes:
       # Host root (read-only) for disk usage + folder breakdown.
       - /:/host:ro
@@ -25,6 +27,8 @@ services:
       # Host wpa_supplicant control sockets (Wi-Fi SSID / IP via wpa_cli). Must be
       # writable: wpa_cli's client socket lives here so the host daemon can reply.
       - /var/run/wpa_supplicant:/var/run/wpa_supplicant
+      # Uptime history lives here, outside the container's writable layer.
+      - monitor-data:/data
     networks:
       - lab-network
     logging:
@@ -36,3 +40,6 @@ services:
 networks:
   lab-network:
     external: true
+
+volumes:
+  monitor-data:

@@ -6,6 +6,8 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 
 - Live CPU, RAM, and disk usage, loaded lazily per card
 - App health for every Docker container (healthy / degraded / down)
+- Availability history per app (24h / 7d / 30d) with restart counts, stored as a
+  transition ledger so it costs a line per state change, not per poll
 - Process list sorted by resource usage
 - Temperature (via `vcgencmd`, falling back to the host thermal zone)
 - Hardware info (board model, serial, kernel, arch)
@@ -24,6 +26,7 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 | `/api/hardware`  | Board, kernel, serial, firmware               |
 | `/api/processes` | Top processes                                 |
 | `/api/health`    | Health of every container (ok / warn / down)  |
+| `/api/uptime`    | 24h up/down timeline segments per container   |
 | `/api/folders`   | Folder size breakdown (slow, cached 2 min)    |
 | `/api/docker`    | Docker storage usage (cached 30 s)            |
 
@@ -52,6 +55,15 @@ in `docker-compose.yml`):
 | `HOST_PROC`  | Host `/proc` (CPU, RAM, processes)        |
 | `HOST_SYS`   | Host `/sys` (thermal, device tree, NICs)  |
 | `HOST_ETC`   | Host `/etc` (distro/platform info)        |
+| `UPTIME_DIR` | Directory for the availability ledger; empty disables persistence |
+| `UPTIME_INTERVAL` | Docker state poll interval (Go duration, default `30s`) |
+
+Availability is measured by polling `docker ps -a`. A container counts as up
+when it is running and its healthcheck (if any) is not failing. Only state
+changes are persisted, so the ledger stays tiny. Percentages are shown only for
+windows the container has existed through, and the monitor cannot measure
+downtime while it is itself stopped — use an external prober for end-to-end
+uptime.
 
 ## Build & Run
 

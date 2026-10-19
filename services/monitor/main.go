@@ -179,14 +179,15 @@ func getDiskUsage() DiskStats {
 
 // AppHealth is the state of one container (an "app" in the lab).
 type AppHealth struct {
-	Name    string `json:"name"`
-	Image   string `json:"image"`
-	State   string `json:"state"`         // docker state: running, exited, restarting...
-	Health  string `json:"health"`        // healthy, unhealthy, starting, none
-	Status  string `json:"status"`        // docker's human status ("Up 2 days (healthy)")
-	URL     string `json:"url,omitempty"` // public link, when the proxy exposes this app
-	Level   string `json:"level"`         // ok, warn, down
-	Summary string `json:"summary"`       // short reason shown in the UI
+	Name    string     `json:"name"`
+	Image   string     `json:"image"`
+	State   string     `json:"state"`         // docker state: running, exited, restarting...
+	Health  string     `json:"health"`        // healthy, unhealthy, starting, none
+	Status  string     `json:"status"`        // docker's human status ("Up 2 days (healthy)")
+	URL     string     `json:"url,omitempty"` // public link, when the proxy exposes this app
+	Level   string     `json:"level"`         // ok, warn, down
+	Summary string     `json:"summary"`       // short reason shown in the UI
+	Uptime  UptimeInfo `json:"uptime"`        // availability history (transition ledger)
 }
 
 type HealthReport struct {
@@ -226,7 +227,8 @@ func publicHosts() map[string]bool {
 }
 
 func getHealth() HealthReport {
-	rep := HealthReport{Apps: []AppHealth{}, Checked: time.Now().Format(time.RFC3339)}
+	now := time.Now()
+	rep := HealthReport{Apps: []AppHealth{}, Checked: now.Format(time.RFC3339)}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -274,6 +276,10 @@ func getHealth() HealthReport {
 				a.URL = "https://" + h
 				break
 			}
+		}
+
+		if uptimeHistory != nil {
+			a.Uptime = uptimeHistory.summary(a.Name, now)
 		}
 
 		switch a.Level {
@@ -436,20 +442,49 @@ func getDiskFolders() []FolderInfo {
 }
 
 func getHomeSubFolders(path string) []FolderInfo {
-	// Get first user directory
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return nil
 	}
 
+	var subs []FolderInfo
 	for _, entry := range entries {
-		if entry.IsDir() && !strings.HasPrefix(entry.Name(), ".") {
-			userDir := filepath.Join(path, entry.Name())
-			// Get contents of user's home directory
-			return getSubFolders(userDir)
+		if !entry.IsDir() || strings.HasPrefix(entry.Name(), ".") {
+			continue
 		}
+		dir := filepath.Join(path, entry.Name())
+		if entry.Name() == "dev" {
+			devSize := getDirSize(dir)
+			if devSize > 10*1024*1024 {
+				subs = append(subs, FolderInfo{
+					Path: "dev",
+					Size: devSize,
+					Subs: getSubFolders(dir),
+				})
+			}
+			continue
+		}
+
+		userSubs := getSubFolders(dir)
+		for i := range userSubs {
+			if userSubs[i].Path == "dev" {
+				userSubs[i].Subs = getSubFolders(filepath.Join(dir, userSubs[i].Path))
+			}
+		}
+		subs = append(subs, userSubs...)
 	}
-	return nil
+
+	// Sort by size descending
+	sort.Slice(subs, func(i, j int) bool {
+		return subs[i].Size > subs[j].Size
+	})
+
+	// Limit to top 8
+	if len(subs) > 8 {
+		subs = subs[:8]
+	}
+
+	return subs
 }
 
 func getSubFolders(path string) []FolderInfo {
@@ -693,9 +728,21 @@ func (c *ttlCache) get(ttl time.Duration, fn func() any) any {
 }
 
 var (
-	folderCache ttlCache
-	dockerCache ttlCache
+	folderCache   ttlCache
+	dockerCache   ttlCache
+	uptimeHistory *uptimeLedger
 )
+
+// uptimeInterval reads UPTIME_INTERVAL (Go duration, e.g. "30s").
+func uptimeInterval() time.Duration {
+	if s := os.Getenv("UPTIME_INTERVAL"); s != "" {
+		if d, err := time.ParseDuration(s); err == nil && d > 0 {
+			return d
+		}
+		log.Printf("uptime: invalid UPTIME_INTERVAL %q, using 30s", os.Getenv("UPTIME_INTERVAL"))
+	}
+	return 30 * time.Second
+}
 
 // jsonEndpoint wraps a data function as an authenticated JSON endpoint.
 func jsonEndpoint(fn func() any) http.HandlerFunc {
@@ -731,6 +778,9 @@ func main() {
 		log.Fatal("MONITOR_USER and MONITOR_PASS must be set (see example.env)")
 	}
 
+	uptimeHistory = newUptimeLedger(os.Getenv("UPTIME_DIR"))
+	go uptimeHistory.run(uptimeInterval(), nil)
+
 	http.HandleFunc("/", requireAuth(handleIndex))
 	http.HandleFunc("/api/overview", jsonEndpoint(func() any { return getOverview() }))
 	http.HandleFunc("/api/cpu", jsonEndpoint(func() any { return getCPU() }))
@@ -739,6 +789,9 @@ func main() {
 	http.HandleFunc("/api/hardware", jsonEndpoint(func() any { return getHardwareInfo() }))
 	http.HandleFunc("/api/processes", jsonEndpoint(func() any { return getTopProcesses(15) }))
 	http.HandleFunc("/api/health", jsonEndpoint(func() any { return getHealth() }))
+	http.HandleFunc("/api/uptime", jsonEndpoint(func() any {
+		return uptimeHistory.series(24*time.Hour, time.Now())
+	}))
 	// Slow (du scans / docker system df): cached so repeat loads are instant.
 	http.HandleFunc("/api/folders", jsonEndpoint(func() any {
 		return folderCache.get(2*time.Minute, func() any { return getDiskFolders() })

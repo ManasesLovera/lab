@@ -49,6 +49,9 @@ __pycache__/
 obscura
 obscura-*-linux.tar.gz
 
+# Compiled service binaries (built by `go build`)
+services/monitor/monitor
+
 # OS files
 .DS_Store
 Thumbs.db

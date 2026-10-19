@@ -22,6 +22,9 @@ services:
       - /sys:/host/sys:ro
       # Docker storage stats (`docker system df`).
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Host wpa_supplicant control sockets (Wi-Fi SSID / IP via wpa_cli). Must be
+      # writable: wpa_cli's client socket lives here so the host daemon can reply.
+      - /var/run/wpa_supplicant:/var/run/wpa_supplicant
     networks:
       - lab-network
     logging:

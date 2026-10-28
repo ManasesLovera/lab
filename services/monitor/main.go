@@ -407,6 +407,20 @@ func getHardwareInfo() HardwareStats {
 	return hw
 }
 
+// nestedHomeFolders lists user folders that get a second-level breakdown,
+// like the "dev" folder does.
+var nestedHomeFolders = map[string]bool{
+	"dev": true, ".nvm": true, "lab": true, "runners": true,
+	".local": true, ".opencode": true,
+}
+
+// nestedRootFolders lists sub-folders of a top-level path that get a
+// second-level breakdown.
+var nestedRootFolders = map[string]map[string]bool{
+	"/var": {"lib": true},
+	"/usr": {"lib": true, "bin": true},
+}
+
 func getDiskFolders() []FolderInfo {
 	folders := []string{"/home", "/usr", "/var", "/snap", "/boot", "/tmp", "/opt"}
 
@@ -427,6 +441,13 @@ func getDiskFolders() []FolderInfo {
 					folder.Subs = getHomeSubFolders(full)
 				} else {
 					folder.Subs = getSubFolders(full)
+					if names, ok := nestedRootFolders[path]; ok {
+						for i := range folder.Subs {
+							if names[folder.Subs[i].Path] {
+								folder.Subs[i].Subs = getSubFolders(filepath.Join(full, folder.Subs[i].Path))
+							}
+						}
+					}
 				}
 			}
 			result = append(result, folder)
@@ -453,21 +474,9 @@ func getHomeSubFolders(path string) []FolderInfo {
 			continue
 		}
 		dir := filepath.Join(path, entry.Name())
-		if entry.Name() == "dev" {
-			devSize := getDirSize(dir)
-			if devSize > 10*1024*1024 {
-				subs = append(subs, FolderInfo{
-					Path: "dev",
-					Size: devSize,
-					Subs: getSubFolders(dir),
-				})
-			}
-			continue
-		}
-
 		userSubs := getSubFolders(dir)
 		for i := range userSubs {
-			if userSubs[i].Path == "dev" {
+			if nestedHomeFolders[userSubs[i].Path] {
 				userSubs[i].Subs = getSubFolders(filepath.Join(dir, userSubs[i].Path))
 			}
 		}

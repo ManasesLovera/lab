@@ -69,6 +69,9 @@
   .hw { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 18px; }
   .hw label { display: block; font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .hw div div { font-size: 13.5px; font-weight: 500; word-break: break-word; }
+  .copy-btn { font: inherit; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--dim); background: var(--track); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; cursor: pointer; transition: color .2s, border-color .2s; }
+  .copy-btn:hover { color: var(--text); border-color: var(--blue); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green); }
 
   /* ---------- loading skeleton / errors ---------- */
   .loading .sk, .sk.on { color: transparent !important; background: linear-gradient(90deg, var(--skel) 25%, var(--skel2) 50%, var(--skel) 75%); background-size: 200% 100%; animation: shimmer 1.3s infinite; border-radius: 4px; user-select: none; }
@@ -229,7 +232,7 @@
     <!-- HARDWARE -->
     <section class="panel" id="p-hardware">
       <div class="card loading" id="c-hw">
-        <h2>Hardware</h2>
+        <h2>Hardware <button class="copy-btn" id="hw-copy" title="Copy hardware details as JSON">Copy JSON</button></h2>
         <div class="hw" id="hw"></div>
       </div>
     </section>
@@ -254,6 +257,28 @@ function gauge(prefix, pct) {
 }
 const ready = el => { el.classList.remove('loading'); el.querySelectorAll('.sk').forEach(n => n.classList.remove('sk','on')); };
 const markUpdated = () => { $('last-update').textContent = 'updated ' + new Date().toLocaleTimeString(); };
+let lastHw = null;
+
+async function copyJSON(data) {
+  const text = JSON.stringify(data, null, 2);
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
 
 /* ---- one loader per data source; each renders as soon as ITS response lands ---- */
 const loaders = {
@@ -305,6 +330,7 @@ const loaders = {
     $('process-table').innerHTML = (ps || []).map(p => `<tr><td class="mono">${p.pid}</td><td>${esc(p.name)}</td><td class="c-cpu">${p.cpu.toFixed(1)}%</td><td class="c-ram">${p.ram.toFixed(1)}%</td></tr>`).join('');
   },
   hardware: h => {
+    lastHw = h;
     const f = [['Board',h.board],['Platform',h.platform],['Kernel',h.kernel],['Arch',h.arch],['Serial',h.serial],['Revision',h.revision],['GPU memory',h.gpu],['Firmware',h.firmware],['USB',h.usb],['Ethernet MAC',h.ethernet]];
     $('hw').innerHTML = f.map(([k,v]) => `<div><label>${k}</label><div>${esc(v) || '—'}</div></div>`).join('');
     ready($('c-hw'));
@@ -399,6 +425,14 @@ function show(name) {
 let saved = null; try { saved = localStorage.getItem('monitor-theme'); } catch (e) {}
 setTheme(saved || 'light');
 $('theme-btn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+$('hw-copy').addEventListener('click', async () => {
+  if (!lastHw) return;
+  const btn = $('hw-copy');
+  const ok = await copyJSON(lastHw);
+  btn.textContent = ok ? 'Copied!' : 'Copy failed';
+  btn.classList.toggle('copied', ok);
+  setTimeout(() => { btn.textContent = 'Copy JSON'; btn.classList.remove('copied'); }, 1500);
+});
 window.addEventListener('hashchange', () => show(location.hash.slice(1)));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { Object.keys(timers).forEach(load); } });
 Object.entries(global).forEach(([s, every]) => poll(s, every));

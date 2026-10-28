@@ -304,9 +304,48 @@ func getHealth() HealthReport {
 	return rep
 }
 
+// vcgencmd runs the host's Raspberry Pi firmware tool. Inside the container
+// the host binary is visible under HOST_ROOT, but it is dynamically linked
+// against the host's glibc, so it must be invoked through the host loader.
+func vcgencmd(args ...string) (string, error) {
+	if out, err := exec.Command("vcgencmd", args...).Output(); err == nil {
+		return string(out), nil
+	}
+
+	loaders := []string{
+		"lib/ld-linux-aarch64.so.1",
+		"lib/ld-linux-armhf.so.3",
+		"lib64/ld-linux-x86-64.so.2",
+	}
+	libDirs := []string{
+		"usr/lib/aarch64-linux-gnu",
+		"usr/lib/arm-linux-gnueabihf",
+		"usr/lib/x86_64-linux-gnu",
+	}
+	bin := hostPath("usr/bin/vcgencmd")
+	for _, loaderRel := range loaders {
+		loader := hostPath(loaderRel)
+		if _, err := os.Stat(loader); err != nil {
+			continue
+		}
+		for _, libRel := range libDirs {
+			libDir := hostPath(libRel)
+			if _, err := os.Stat(libDir); err != nil {
+				continue
+			}
+			argv := append([]string{"--library-path", libDir, bin}, args...)
+			out, err := exec.Command(loader, argv...).Output()
+			if err == nil {
+				return string(out), nil
+			}
+		}
+	}
+	return "", exec.ErrNotFound
+}
+
 func getTemperature() (float64, error) {
 	// Preferred: Raspberry Pi firmware tool (only present on the host).
-	if out, err := exec.Command("vcgencmd", "measure_temp").Output(); err == nil {
+	if out, err := vcgencmd("measure_temp"); err == nil {
 		// Parse "temp=48.8'C"
 		str := string(out)
 		start := strings.Index(str, "=")
@@ -373,21 +412,34 @@ func getHardwareInfo() HardwareStats {
 	}
 
 	// GPU memory
-	if gpu, err := exec.Command("vcgencmd", "get_mem", "gpu").Output(); err == nil {
-		hw.GPU = strings.TrimSpace(string(gpu))
+	if gpu, err := vcgencmd("get_mem", "gpu"); err == nil {
+		hw.GPU = strings.TrimSpace(gpu)
 		// Parse "gpu=76M"
 		if idx := strings.Index(hw.GPU, "="); idx >= 0 {
 			hw.GPU = hw.GPU[idx+1:]
 		}
 	}
 
-	// GPU firmware version
-	if fw, err := exec.Command("vcgencmd", "version").Output(); err == nil {
-		lines := strings.Split(string(fw), "\n")
-		if len(lines) >= 2 {
-			hw.Firmware = strings.TrimSpace(lines[1])
-		} else {
-			hw.Firmware = strings.TrimSpace(string(fw))
+	// Firmware type/program. On Pi 4/5 the firmware is the bootloader stored
+	// in the SPI EEPROM; there is no separate start.elf anymore.
+	if name, err := os.ReadFile(sysPath("firmware/devicetree/base/chosen/bootloader/name")); err == nil && strings.TrimRight(string(name), "\x00\n ") != "" {
+		hw.Firmware = "Bootloader EEPROM"
+		if compat, err := os.ReadFile(sysPath("firmware/devicetree/base/compatible")); err == nil {
+			for _, token := range strings.Split(string(compat), "\x00") {
+				if strings.HasPrefix(token, "brcm,bcm") {
+					hw.Firmware = "Bootloader EEPROM (bootloader-" + strings.TrimPrefix(token, "brcm,bcm") + ")"
+					break
+				}
+			}
+		}
+	} else if fw, err := vcgencmd("version"); err == nil {
+		// Older Pi: VideoCore firmware loaded from start.elf on the boot partition.
+		hw.Firmware = "VideoCore firmware"
+		for _, line := range strings.Split(fw, "\n") {
+			if strings.HasPrefix(line, "version ") {
+				hw.Firmware += " " + strings.TrimSpace(strings.TrimPrefix(line, "version "))
+				break
+			}
 		}
 	}
 

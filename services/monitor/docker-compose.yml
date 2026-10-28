@@ -29,6 +29,9 @@ services:
       - /var/run/wpa_supplicant:/var/run/wpa_supplicant
       # Uptime history lives here, outside the container's writable layer.
       - monitor-data:/data
+    devices:
+      # Mailbox device used by the host's vcgencmd (GPU memory / firmware).
+      - /dev/vcio:/dev/vcio
     networks:
       - lab-network
     logging:

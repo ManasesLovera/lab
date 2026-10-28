@@ -68,18 +68,28 @@ if command -v docker >/dev/null 2>&1; then
   fi
 fi
 
-# 2. apt cache and unused packages
-echo "[2/7] apt cache"
+# 2. Self-hosted GitHub runners (old versions, update payload, old logs)
+echo "[2/8] self-hosted runners"
+if [ -x "$LAB_DIR/shared/runner-cleanup.sh" ]; then
+  if [ "$DRY_RUN" -eq 1 ]; then
+    as_owner "$LAB_DIR/shared/runner-cleanup.sh" --dry-run
+  else
+    as_owner "$LAB_DIR/shared/runner-cleanup.sh"
+  fi
+fi
+
+# 3. apt cache and unused packages
+echo "[3/8] apt cache"
 run apt-get clean
 run apt-get autoremove -y
 
-# 3. Logs
-echo "[3/7] journal and rotated logs"
+# 4. Logs
+echo "[4/8] journal and rotated logs"
 run journalctl --vacuum-size=50M
 run find /var/log -type f \( -name '*.gz' -o -name '*.[0-9]' \) -delete
 
-# 4. Git worktrees (merged and clean ones under .claude/worktrees)
-echo "[4/7] git worktrees"
+# 5. Git worktrees (merged and clean ones under .claude/worktrees)
+echo "[5/8] git worktrees"
 if git -C "$LAB_DIR" rev-parse --git-dir >/dev/null 2>&1; then
   as_owner git -C "$LAB_DIR" worktree prune
   main_branch="main"
@@ -99,8 +109,8 @@ if git -C "$LAB_DIR" rev-parse --git-dir >/dev/null 2>&1; then
     done
 fi
 
-# 5. Old tool versions (keep the newest two Claude versions, current Codex release)
-echo "[5/7] old tool versions"
+# 6. Old tool versions (keep the newest two Claude versions, current Codex release)
+echo "[6/8] old tool versions"
 prune_old "$OWNER_HOME/.local/share/claude/versions" 2
 codex_releases="$OWNER_HOME/.codex/packages/app-server-daemon/releases"
 codex_current="$(basename "$(readlink -f "$OWNER_HOME/.codex/packages/app-server-daemon/current" 2>/dev/null)")"
@@ -112,12 +122,12 @@ if [ -d "$codex_releases" ]; then
   done
 fi
 
-# 6. Package manager caches
-echo "[6/7] npm and user caches"
+# 7. Package manager caches
+echo "[7/8] npm and user caches"
 as_owner bash -lc 'command -v npm >/dev/null && npm cache clean --force'
 run rm -rf "$OWNER_HOME/.cache/pip" "$OWNER_HOME/.cache/go-build"
 
-echo "[7/7] done"
+echo "[8/8] done"
 echo ""
 echo "After: $(used)"
 echo "Review remaining large dirs: ~/dev ~/runners ~/obscura ~/backups ~/.local/share/opencode"

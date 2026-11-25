@@ -124,6 +124,69 @@
   tr:hover td { background: var(--hover); }
   .mono { font-family: ui-monospace, monospace; color: var(--dim); } .c-cpu { color: var(--orange); font-weight: 600; } .c-ram { color: var(--blue2); font-weight: 600; }
 
+  /* ---------- secrets ---------- */
+  .secrets-head { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+  .secrets-head .spacer { flex: 1; }
+  .btn { font: inherit; font-size: 12.5px; font-weight: 600; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; box-shadow: var(--shadow); }
+  .btn:hover { border-color: var(--blue); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn.danger { color: var(--red); }
+  .btn.danger:hover { border-color: var(--red); }
+  .btn.small { padding: 4px 9px; font-size: 11.5px; box-shadow: none; }
+  .btn.ghost { background: none; box-shadow: none; }
+  .toggle { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .toggle input { accent-color: var(--blue); }
+  .secret-table td { vertical-align: middle; }
+  .secret-table .name { font-weight: 600; }
+  .secret-table .pw { font-family: ui-monospace, monospace; font-size: 12px; color: var(--muted); word-break: break-all; }
+  .tag { display: inline-block; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 2px 7px; border-radius: 999px; background: var(--track); color: var(--muted); }
+  .tag.database { background: var(--ok-bg); color: var(--green); }
+  .tag.api_key { background: var(--warn-bg); color: var(--yellow); }
+  .tag.note { background: var(--active-bg); color: var(--active-text); }
+  .actions { display: flex; gap: 6px; justify-content: flex-end; }
+  .empty { color: var(--dim); font-size: 13px; padding: 14px 0; }
+  .hist { display: flex; flex-direction: column; }
+  .hist-row { display: grid; grid-template-columns: 140px 72px 150px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--row); font-size: 12.5px; }
+  .hist-row.head { align-items: center; padding-bottom: 7px; border-bottom: 1px solid var(--line); font-size: 10.5px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: 1px; }
+  .hist-row:last-child { border: 0; }
+  .hist-row .when { color: var(--dim); font-variant-numeric: tabular-nums; }
+  .hist-row .ct { font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .hist-row .ct.update { color: var(--blue); } .hist-row .ct.create { color: var(--green); } .hist-row .ct.delete { color: var(--red); }
+  .hist-row .fld { color: var(--muted); word-break: break-word; }
+  .hist-cell { word-break: break-all; overflow-wrap: anywhere; }
+  .hist-old { color: var(--dim); text-decoration: line-through; }
+  .hist-new { color: var(--text); }
+  .hist-none { color: var(--dim); }
+  .env-file { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+  .env-file:last-child { margin-bottom: 0; }
+  .env-file > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 8px; list-style: none; }
+  .env-file > summary::-webkit-details-marker { display: none; }
+  .env-file > summary .count { color: var(--dim); font-weight: 400; margin-left: auto; font-size: 12px; }
+  .env-var { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr) auto; gap: 10px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--row); font-size: 12.5px; }
+  .env-key { font-family: ui-monospace, monospace; color: var(--muted); word-break: break-all; }
+  .env-val { font-family: ui-monospace, monospace; color: var(--text); word-break: break-all; }
+  .env-val.masked { color: var(--dim); }
+  dialog { border: 1px solid var(--line); border-radius: 14px; background: var(--card); color: var(--text); padding: 0; width: min(560px, calc(100vw - 32px)); box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+  dialog::backdrop { background: rgba(15,23,42,.45); }
+  .dlg-head { padding: 18px 22px 0; font-size: 17px; font-weight: 650; }
+  .dlg-body { padding: 16px 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .dlg-body .full { grid-column: 1 / -1; }
+  .dlg-body label { display: block; font-size: 11px; font-weight: 600; color: var(--dim); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 5px; }
+  .dlg-body input, .dlg-body select, .dlg-body textarea { width: 100%; font: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); }
+  .dlg-body input:focus, .dlg-body select:focus, .dlg-body textarea:focus { outline: 2px solid var(--active-bg); border-color: var(--blue); }
+  .dlg-body .hint { font-size: 11.5px; color: var(--dim); margin-top: 4px; }
+  .pw-row { display: flex; gap: 8px; }
+  .pw-row input { flex: 1; }
+  .dlg-foot { padding: 0 22px 18px; display: flex; gap: 10px; justify-content: flex-end; }
+  .dlg-err { grid-column: 1 / -1; color: var(--red); font-size: 12.5px; min-height: 1em; }
+  @media (max-width: 560px) {
+    .dlg-body { grid-template-columns: 1fr; }
+    .hist-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2px 10px; }
+    .hist-row.head { display: none; }
+    .hist-row .when, .hist-row .ct, .hist-row .fld { grid-column: 1 / -1; }
+  }
+
   /* ---------- mobile: sidebar becomes a top tab bar ---------- */
   @media (max-width: 800px) {
     .layout { grid-template-columns: 1fr; }
@@ -147,6 +210,7 @@
     <a class="tab" data-tab="storage" href="#storage"><span class="ico">▤</span>Storage</a>
     <a class="tab" data-tab="processes" href="#processes"><span class="ico">≣</span>Processes</a>
     <a class="tab" data-tab="hardware" href="#hardware"><span class="ico">⚙</span>Hardware</a>
+    <a class="tab" data-tab="secrets" href="#secrets"><span class="ico">⚿</span>Secrets<span class="badge" id="secrets-badge">…</span></a>
     <button class="tab theme" id="theme-btn" title="Toggle light / dark"><span class="ico" id="theme-ico">☾</span><span id="theme-label">Dark mode</span></button>
     <div class="side-foot" id="last-update"></div>
   </nav>
@@ -236,8 +300,93 @@
         <div class="hw" id="hw"></div>
       </div>
     </section>
+
+    <!-- SECRETS -->
+    <section class="panel" id="p-secrets">
+      <div class="secrets-head">
+        <button class="btn primary" id="secret-add">+ New secret</button>
+        <label class="toggle"><input type="checkbox" id="secret-reveal"> Reveal passwords</label>
+        <span class="spacer"></span>
+        <button class="btn ghost small" id="secret-refresh">Refresh</button>
+      </div>
+      <div class="err" id="secrets-err"></div>
+      <div class="card">
+        <h2>Stored credentials <small id="secrets-count"></small></h2>
+        <table class="secret-table">
+          <thead><tr><th>Name</th><th>Type</th><th>Username</th><th>URL</th><th>Password</th><th></th></tr></thead>
+          <tbody id="secrets-body"><tr><td colspan="6" class="sk on">loading</td></tr></tbody>
+        </table>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h2>Change history <small>newest first</small></h2>
+        <div class="hist" id="secrets-history"><div class="empty">Loading…</div></div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <h2>Environment files <small>project .env secrets</small></h2>
+        <div id="env-files"><div class="empty">Loading…</div></div>
+      </div>
+    </section>
   </main>
 </div>
+
+<dialog id="secret-dialog">
+  <form id="secret-form" method="dialog">
+    <div class="dlg-head" id="secret-dialog-title">New secret</div>
+    <div class="dlg-body">
+      <div>
+        <label for="sf-name">Name</label>
+        <input id="sf-name" name="name" required autocomplete="off" placeholder="e.g. postgres_admin">
+      </div>
+      <div>
+        <label for="sf-type">Type</label>
+        <select id="sf-type" name="type">
+          <option value="login">login</option>
+          <option value="api_key">api_key</option>
+          <option value="database">database</option>
+          <option value="ssh">ssh</option>
+          <option value="note">note</option>
+          <option value="env">env</option>
+          <option value="totp">totp</option>
+        </select>
+      </div>
+      <div>
+        <label for="sf-username">Username</label>
+        <input id="sf-username" name="username" autocomplete="off">
+      </div>
+      <div>
+        <label for="sf-url">URL</label>
+        <input id="sf-url" name="url" autocomplete="off" placeholder="https://… or host:port">
+      </div>
+      <div class="full">
+        <label for="sf-password">Password</label>
+        <div class="pw-row">
+          <input id="sf-password" name="password" type="text" autocomplete="new-password">
+          <button type="button" class="btn small" id="sf-generate">Generate</button>
+        </div>
+        <div class="hint" id="sf-password-hint">Leave blank to keep the existing password when editing.</div>
+      </div>
+      <div class="full">
+        <label for="sf-description">Description</label>
+        <input id="sf-description" name="description" autocomplete="off">
+      </div>
+      <div>
+        <label for="sf-tags">Tags</label>
+        <input id="sf-tags" name="tags" autocomplete="off" placeholder="comma,separated">
+      </div>
+      <div>
+        <label for="sf-meta">Meta (JSON)</label>
+        <input id="sf-meta" name="meta" autocomplete="off" placeholder='{"host":"postgres"}'>
+      </div>
+      <div class="dlg-err" id="sf-err"></div>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="sf-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="sf-save">Save</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 function setTheme(t) {
@@ -342,6 +491,7 @@ const loaders = {
     renderApps();
   },
   uptime: r => { lastSeries = r; renderApps(); },
+  secrets: entries => { secretCache = entries || []; renderSecrets(); },
 };
 
 let lastHealth = null, lastSeries = null;
@@ -382,6 +532,161 @@ function renderApps() {
   b.textContent = lastHealth.down ? lastHealth.down+' down' : lastHealth.warn ? lastHealth.warn+' warn' : 'OK';
 }
 
+/* ---- secrets tab ---- */
+let secretCache = [], secretReveal = false, editingName = null;
+
+async function apiJSON(url, opts) {
+  const res = await fetch(url, { cache: 'no-store', ...(opts || {}) });
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+  return data;
+}
+
+function secretQuery() { return secretReveal ? '?reveal=1' : ''; }
+function fmtTime(s) {
+  if (!s) return '—';
+  const d = new Date(String(s).replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z'));
+  return isNaN(d) ? String(s) : d.toLocaleString();
+}
+
+function renderSecrets() {
+  $('secrets-count').textContent = secretCache.length + (secretCache.length === 1 ? ' entry' : ' entries');
+  $('secrets-badge').textContent = secretCache.length;
+  $('secrets-badge').className = 'badge';
+  $('secrets-body').innerHTML = secretCache.map(e => {
+    const pw = secretReveal && e.password ? esc(e.password) : (e.has_password ? '••••••••' : '—');
+    return `<tr>
+      <td class="name">${esc(e.name)}<div class="mono" style="font-size:11px">${esc(e.description) || ''}</div></td>
+      <td><span class="tag ${esc(e.type)}">${esc(e.type) || '—'}</span></td>
+      <td>${esc(e.username) || '—'}</td>
+      <td>${e.url ? `<a class="link" href="${esc(/^https?:/.test(e.url) ? e.url : 'https://' + e.url)}" target="_blank" rel="noopener">${esc(e.url)}</a>` : '—'}</td>
+      <td class="pw">${pw}</td>
+      <td><div class="actions">
+        <button class="btn small" data-edit="${esc(e.name)}">Edit</button>
+        <button class="btn small danger" data-del="${esc(e.name)}">Delete</button>
+      </div></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" class="empty">No secrets stored yet. Create one with “New secret”.</td></tr>';
+
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => openSecretDialog(b.dataset.edit));
+  document.querySelectorAll('[data-del]').forEach(b => b.onclick = () => removeSecret(b.dataset.del));
+}
+
+async function loadSecretHistory() {
+  try {
+    const rows = await apiJSON('/api/secrets/history?limit=100' + (secretReveal ? '&reveal=1' : ''));
+    const head = `<div class="hist-row head"><span>When</span><span>Change</span><span>Entry</span><span>Old value</span><span>New value</span></div>`;
+    $('secrets-history').innerHTML = (rows && rows.length)
+      ? head + rows.map(r => {
+          const oldV = r.old_value ? `<span class="hist-old">${esc(r.old_value)}</span>` : '<span class="hist-none">—</span>';
+          const newV = r.new_value ? `<span class="hist-new">${esc(r.new_value)}</span>` : '<span class="hist-none">—</span>';
+          return `<div class="hist-row">
+            <span class="when">${esc(fmtTime(r.changed_at))}</span>
+            <span class="ct ${esc(r.change_type)}">${esc(r.change_type)}</span>
+            <span class="fld">${esc(r.entry_name)}${r.field ? '.' + esc(r.field) : ''}</span>
+            <span class="hist-cell">${oldV}</span>
+            <span class="hist-cell">${newV}</span>
+          </div>`;
+        }).join('')
+      : '<div class="empty">No change history yet.</div>';
+  } catch (e) { $('secrets-history').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function loadEnv() {
+  try {
+    const files = await apiJSON('/api/env' + secretQuery());
+    $('env-files').innerHTML = (files || []).map((f, i) => `
+      <details class="env-file"${i === 0 ? ' open' : ''}>
+        <summary>📄 ${esc(f.path)}<span class="count">${f.vars.length} var${f.vars.length === 1 ? '' : 's'}</span></summary>
+        ${f.vars.map(v => `
+          <div class="env-var">
+            <span class="env-key">${esc(v.key)}</span>
+            <span class="env-val${v.value === '****' ? ' masked' : ''}">${esc(v.value) || '—'}</span>
+            <button class="btn small" data-env="${esc(f.path)}" data-key="${esc(v.key)}" data-val="${esc(v.value)}">Edit</button>
+          </div>`).join('')}
+      </details>`).join('') || '<div class="empty">No .env files found.</div>';
+
+    document.querySelectorAll('[data-env]').forEach(b => b.onclick = () => editEnvValue(b.dataset.env, b.dataset.key, b.dataset.val));
+  } catch (e) { $('env-files').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function openSecretsTab() {
+  $('secrets-err').textContent = '';
+  try {
+    const entries = await apiJSON('/api/secrets' + secretQuery());
+    loaders.secrets(entries);
+  } catch (e) { $('secrets-err').textContent = e.message; }
+  loadSecretHistory();
+  loadEnv();
+}
+
+function openSecretDialog(name) {
+  editingName = name || null;
+  const e = name ? secretCache.find(x => x.name === name) : null;
+  $('secret-dialog-title').textContent = e ? 'Edit secret' : 'New secret';
+  $('sf-name').value = e ? e.name : '';
+  $('sf-name').readOnly = !!e;
+  $('sf-type').value = (e && e.type) || 'login';
+  $('sf-username').value = (e && e.username) || '';
+  $('sf-url').value = (e && e.url) || '';
+  $('sf-password').value = '';
+  $('sf-description').value = (e && e.description) || '';
+  $('sf-tags').value = (e && e.tags) || '';
+  $('sf-meta').value = (e && e.meta) || '';
+  $('sf-password-hint').style.display = e ? 'block' : 'none';
+  $('sf-err').textContent = '';
+  $('secret-dialog').showModal();
+}
+
+async function saveSecret(ev) {
+  ev.preventDefault();
+  const body = {
+    name: $('sf-name').value.trim(),
+    type: $('sf-type').value,
+    username: $('sf-username').value,
+    url: $('sf-url').value,
+    description: $('sf-description').value,
+    tags: $('sf-tags').value,
+    meta: $('sf-meta').value,
+  };
+  const pw = $('sf-password').value;
+  if (pw !== '') body.password = pw;
+  if (!body.name) { $('sf-err').textContent = 'Name is required.'; return; }
+  try {
+    await apiJSON('/api/secrets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    $('secret-dialog').close();
+    openSecretsTab();
+  } catch (e) { $('sf-err').textContent = e.message; }
+}
+
+async function removeSecret(name) {
+  if (!confirm(`Delete secret "${name}"? This cannot be undone.`)) return;
+  try {
+    await apiJSON('/api/secrets?name=' + encodeURIComponent(name), { method: 'DELETE' });
+    openSecretsTab();
+  } catch (e) { $('secrets-err').textContent = e.message; }
+}
+
+async function editEnvValue(path, key, current) {
+  let def = current === '****' ? '' : current;
+  const val = prompt(`New value for ${key}\n(${path})`, def);
+  if (val === null) return;
+  if (current === '****' && val === '') return;
+  try {
+    await apiJSON('/api/env', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, key, value: val }),
+    });
+    loadEnv();
+  } catch (e) { alert('Save failed: ' + e.message); }
+}
+
 /* ---- which sources each tab needs, and how often to refresh (ms; 0 = once) ---- */
 const tabs = {
   overview:  { title: 'Overview',   src: { cpu: 3000, memory: 3000, disk: 15000 } },
@@ -389,6 +694,7 @@ const tabs = {
   storage:   { title: 'Storage',    src: { disk: 15000, docker: 30000, folders: 120000 } },
   processes: { title: 'Processes',  src: { processes: 5000 } },
   hardware:  { title: 'Hardware',   src: { hardware: 0 } },
+  secrets:   { title: 'Secrets',    src: {} },
 };
 const global = { overview: 10000, health: 15000 }; // always fresh: header chips + sidebar badge
 
@@ -420,10 +726,21 @@ function show(name) {
   $('title').textContent = tabs[name].title;
   // Fire every request for this tab at once; each card renders when its own data arrives.
   Object.entries(tabs[name].src).forEach(([s, every]) => poll(s, global[s] || every));
+  if (name === 'secrets') openSecretsTab();
 }
 
 let saved = null; try { saved = localStorage.getItem('monitor-theme'); } catch (e) {}
 setTheme(saved || 'light');
+$('secret-add').addEventListener('click', () => openSecretDialog(null));
+$('secret-refresh').addEventListener('click', openSecretsTab);
+$('secret-reveal').addEventListener('change', e => { secretReveal = e.target.checked; openSecretsTab(); });
+$('secret-form').addEventListener('submit', saveSecret);
+$('sf-cancel').addEventListener('click', () => $('secret-dialog').close());
+$('sf-generate').addEventListener('click', () => {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_';
+  const a = new Uint32Array(28); crypto.getRandomValues(a);
+  $('sf-password').value = Array.from(a, n => chars[n % chars.length]).join('');
+});
 $('theme-btn').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
 $('hw-copy').addEventListener('click', async () => {
   if (!lastHw) return;

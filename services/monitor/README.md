@@ -13,6 +13,9 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 - Hardware info (board model, serial, kernel, arch)
 - Disk breakdown by folder (home, usr, var, etc.) with Docker disk stats
 - Network info (Wi-Fi SSID, IP)
+- Secrets manager: view, reveal, create, edit and delete entries in
+  `shared/data/secrets.db` (the same store as the `secrets` CLI), with per-field
+  change history, plus inline editing of project `.env` files
 
 ## Endpoints
 
@@ -29,9 +32,28 @@ A real-time system monitoring dashboard for Linux (Raspberry Pi / ARM), written 
 | `/api/uptime`    | 24h up/down timeline segments per container   |
 | `/api/folders`   | Folder size breakdown (slow, cached 2 min)    |
 | `/api/docker`    | Docker storage usage (cached 30 s)            |
+| `/api/secrets`   | List / create / update / delete credential entries |
+| `/api/secrets/entry` | One entry (`?name=`)                      |
+| `/api/secrets/history` | Per-field change history              |
+| `/api/env`       | List / edit project `.env` files              |
 
 Each dashboard card requests only its own endpoint, so fast data renders
 without waiting for the slow `du` scans.
+
+## Secrets
+
+The **Secrets** tab reads and writes the same SQLite database as the `secrets`
+CLI (`shared/data/secrets.db`), so anything changed in the dashboard is visible
+to `secrets` and vice versa. Passwords are returned masked unless the UI's
+"Reveal passwords" toggle is on (`?reveal=1`). Edits are recorded in
+`entry_history` with the same schema as the CLI. The tab also lists every
+project `.env` file found under `core/`, `external/` and `services/`; sensitive
+values (keys containing `PASS`, `SECRET`, `TOKEN`, `KEY`, `CRED` or `AUTH`) are
+masked until revealed, and each value can be edited inline.
+
+The container needs write access to the lab directory for this. `docker-compose.yml`
+mounts the project at `/lab` (read-write) and sets `LAB_DIR` / `SECRETS_DB`
+accordingly. Set `SECRETS_HISTORY=0` to disable history writes.
 
 All routes require HTTP basic auth (`MONITOR_USER` / `MONITOR_PASS`).
 
@@ -57,6 +79,9 @@ in `docker-compose.yml`):
 | `HOST_ETC`   | Host `/etc` (distro/platform info)        |
 | `UPTIME_DIR` | Directory for the availability ledger; empty disables persistence |
 | `UPTIME_INTERVAL` | Docker state poll interval (Go duration, default `30s`) |
+| `LAB_DIR`    | Root of the lab checkout used to find `secrets.db` and `.env` files (default `/home/mlovera/lab`) |
+| `SECRETS_DB` | Path to the credentials SQLite DB (default `$LAB_DIR/shared/data/secrets.db`) |
+| `SECRETS_HISTORY` | Set to `0` to disable writing credential change history |
 
 Availability is measured by polling `docker ps -a`. A container counts as up
 when it is running and its healthcheck (if any) is not failing. Only state
@@ -79,10 +104,13 @@ Opens at `http://localhost:8080`.
 ### In the lab
 
 ```bash
-lab up monitor      # build + start
-lab logs monitor    # follow logs
-lab down monitor    # stop
+lab up monitor --build   # rebuild the image + start (use after code changes)
+lab logs monitor         # follow logs
+lab down monitor         # stop
 ```
+
+`lab up monitor` without `--build` reuses the existing image; use `--build`
+whenever the Go code or embedded template has changed.
 
 Reachable at `http://monitor.rpi.local` (local) and
 `https://monitor.mlovera.dev` (production, via the Cloudflare Tunnel).

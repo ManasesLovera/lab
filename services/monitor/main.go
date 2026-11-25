@@ -767,6 +767,9 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// The page is embedded in the binary; don't let browsers keep a stale copy
+	// after a rebuild.
+	w.Header().Set("Cache-Control", "no-store")
 	tmpl.Execute(w, nil)
 }
 
@@ -860,6 +863,12 @@ func main() {
 	http.HandleFunc("/api/docker", jsonEndpoint(func() any {
 		return dockerCache.get(30*time.Second, func() any { return getDockerStats() })
 	}))
+	// Secrets manager: reads/writes the same SQLite DB as the `secrets` CLI and
+	// manages the project .env files.
+	http.HandleFunc("/api/secrets", requireAuth(handleSecrets))
+	http.HandleFunc("/api/secrets/entry", requireAuth(handleSecretEntry))
+	http.HandleFunc("/api/secrets/history", requireAuth(handleSecretHistory))
+	http.HandleFunc("/api/env", requireAuth(handleEnv))
 
 	port := os.Getenv("PORT")
 	if port == "" {

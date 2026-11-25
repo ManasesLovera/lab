@@ -15,9 +15,14 @@ services:
       HOST_ETC: /host/etc
       # Persist the availability transition ledger across restarts.
       UPTIME_DIR: /data
+      # Secrets manager: same SQLite DB as the `secrets` CLI, plus project .env files.
+      LAB_DIR: /lab
+      SECRETS_DB: /lab/shared/data/secrets.db
     volumes:
       # Host root (read-only) for disk usage + folder breakdown.
       - /:/host:ro
+      # Lab project (writable) so secrets and .env files can be created/edited.
+      - /home/mlovera/lab:/lab:rw
       # Host process/hardware view.
       - /proc:/host/proc:ro
       # Host thermal zones + NIC info.

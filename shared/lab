@@ -58,6 +58,7 @@ cmd_help() {
   echo -e "  ${GREEN}list${NC}            List all projects found in core/, external/, and services/."
   echo -e "  ${GREEN}ps [-a]${NC}         Show projects status. Use -a to show stopped projects too."
   echo -e "  ${GREEN}up <name>${NC}       Start a project (docker compose up -d)."
+  echo -e "  ${GREEN}up <name> --build${NC} Start a project, rebuilding its image first."
   echo -e "  ${GREEN}down <name>${NC}     Stop a project (docker compose down)."
   echo -e "  ${GREEN}logs <name>${NC}     View real-time logs for a project."
   echo -e "  ${GREEN}help, -h${NC}        Show this guide."
@@ -194,8 +195,14 @@ cmd_up() {
   fi
   local proj="$1"
   if [ -z "$proj" ]; then
-    echo -e "${RED}Error: Project name required.${NC} Usage: lab up <project>"
+    echo -e "${RED}Error: Project name required.${NC} Usage: lab up <project> [--build]"
     return 1
+  fi
+
+  # --build forces a rebuild; without it docker compose reuses the existing image.
+  local build_arg=""
+  if [[ "$2" == "--build" || "$2" == "-b" ]]; then
+    build_arg="--build"
   fi
 
   local path=$(get_project_path "$proj")
@@ -224,7 +231,7 @@ cmd_up() {
     # Note: docker-setup.sh should probably also handle .env, but for now we focus on standard compose
     bash ./docker-setup.sh
   else
-    docker compose -p "$proj" $env_arg up -d
+    docker compose -p "$proj" $env_arg up -d $build_arg
   fi
 }
 
@@ -312,7 +319,7 @@ case "$1" in
     cmd_ps "$2"
     ;;
   up)
-    cmd_up "$2"
+    cmd_up "${@:2}"
     ;;
   down)
     cmd_down "$2"
